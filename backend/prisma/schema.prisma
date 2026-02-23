@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+enum TaskStatus {
+  PENDING
+  COMPLETED
+}
+
+model Household {
+  id         String   @id @default(uuid())
+  name       String   @db.VarChar(100)
+  inviteCode String   @unique @db.VarChar(8)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  members  User[]
+  tasks    Task[]
+  expenses Expense[]
+  notes    Note[]
+
+  @@map("households")
+}
+
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique @db.VarChar(255)
+  password    String   @db.VarChar(255)
+  name        String   @db.VarChar(100)
+  role        Role     @default(MEMBER)
+  householdId String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  household     Household?     @relation(fields: [householdId], references: [id])
+  createdTasks  Task[]         @relation("TaskCreator")
+  assignedTasks TaskAssignee[]
+  paidExpenses  Expense[]      @relation("ExpensePayer")
+  expenseSplits ExpenseSplit[]
+  notes         Note[]
+
+  @@map("users")
+}
+
+model Task {
+  id          String     @id @default(uuid())
+  title       String     @db.VarChar(200)
+  description String?
+  deadline    DateTime?
+  status      TaskStatus @default(PENDING)
+  householdId String
+  createdById String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  household Household      @relation(fields: [householdId], references: [id])
+  createdBy User           @relation("TaskCreator", fields: [createdById], references: [id])
+  assignees TaskAssignee[]
+
+  @@map("tasks")
+}
+
+model TaskAssignee {
+  taskId String
+  userId String
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, userId])
+  @@map("task_assignees")
+}
+
+model Expense {
+  id          String   @id @default(uuid())
+  description String   @db.VarChar(200)
+  amount      Decimal  @db.Decimal(10, 2)
+  category    String   @db.VarChar(50)
+  date        DateTime @db.Date
+  paidById    String
+  householdId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  paidBy    User           @relation("ExpensePayer", fields: [paidById], references: [id])
+  household Household      @relation(fields: [householdId], references: [id])
+  splits    ExpenseSplit[]
+
+  @@map("expenses")
+}
+
+model ExpenseSplit {
+  id        String   @id @default(uuid())
+  amount    Decimal  @db.Decimal(10, 2)
+  expenseId String
+  userId    String
+  createdAt DateTime @default(now())
+
+  expense Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@map("expense_splits")
+}
+
+model Note {
+  id          String   @id @default(uuid())
+  content     String
+  authorId    String
+  householdId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  author    User      @relation(fields: [authorId], references: [id])
+  household Household @relation(fields: [householdId], references: [id])
+
+  @@map("notes")
+}

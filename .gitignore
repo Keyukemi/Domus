@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Environment
+.env
+
+# Build
+dist/
+
+# Generated
+generated/
+
+# OS
+.DS_Store
+
+docs/
+AGENTS.md
