@@ -25,7 +25,7 @@ export default function Navbar() {
           href="/auth"
           className="bg-button-primary hover:bg-button-primary-hover text-white text-sm font-medium px-5 py-2 rounded-full transition-colors"
         >
-          Get Started
+          Login
         </Link>
       </div>
     </nav>

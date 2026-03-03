@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Nunito, Instrument_Serif } from "next/font/google";
 import "./globals.css";
+import { Providers } from "./providers";
 
 const nunito = Nunito({
   variable: "--font-nunito",
@@ -30,7 +31,7 @@ export default function RootLayout({
       <body
         className={`${nunito.variable} ${instrumentSerif.variable} antialiased`}
       >
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

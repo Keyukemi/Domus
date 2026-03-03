@@ -2,14 +2,33 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+import { Suspense, useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { apiFetch } from "@/lib/api";
+import { HiEye, HiEyeOff } from "react-icons/hi";
 
 export default function AuthPage() {
+  return (
+    <Suspense>
+      <AuthForm />
+    </Suspense>
+  );
+}
+
+function AuthForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { login } = useAuth();
   const [mode, setMode] = useState<"login" | "register">("login");
+  const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    const modeParam = searchParams.get("mode");
+    if (modeParam === "register") {
+      setMode("register");
+    }
+  }, [searchParams]);
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -22,6 +41,7 @@ export default function AuthPage() {
     setError("");
     setSuccess("");
     setFieldErrors({});
+    setShowPassword(false);
   }
 
   function validate() {
@@ -68,9 +88,8 @@ export default function AuthPage() {
           ? { name: form.name, email: form.email, password: form.password }
           : { email: form.email, password: form.password };
 
-      const res = await fetch(`${API_URL}/api/auth/${endpoint}`, {
+      const res = await apiFetch(`/api/auth/${endpoint}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
 
@@ -86,8 +105,7 @@ export default function AuthPage() {
         setForm({ name: "", email: "", password: "" });
         setTimeout(() => switchMode("login"), 1500);
       } else {
-        localStorage.setItem("accessToken", data.accessToken);
-        localStorage.setItem("user", JSON.stringify(data.user));
+        login(data.accessToken, data.user);
         router.push("/");
       }
     } catch {
@@ -212,16 +230,29 @@ export default function AuthPage() {
               <label htmlFor="password" className="block text-sm font-medium text-text mb-1.5">
                 Password
               </label>
-              <input
-                id="password"
-                type="password"
-                value={form.password}
-                onChange={(e) => handleChange("password", e.target.value)}
-                placeholder={mode === "register" ? "At least 8 characters" : "Enter your password"}
-                className={`w-full px-4 py-2.5 rounded-lg border text-sm text-text bg-bg placeholder:text-text-light outline-none transition-colors focus:border-primary ${
-                  fieldErrors.password ? "border-red-400" : "border-border"
-                }`}
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={form.password}
+                  onChange={(e) => handleChange("password", e.target.value)}
+                  placeholder={mode === "register" ? "At least 8 characters" : "Enter your password"}
+                  className={`w-full px-4 py-2.5 pr-11 rounded-lg border text-sm text-text bg-bg placeholder:text-text-light outline-none transition-colors focus:border-primary ${
+                    fieldErrors.password ? "border-red-400" : "border-border"
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text transition-colors"
+                >
+                  {showPassword ? (
+                    <HiEyeOff size={18} />
+                  ) : (
+                    <HiEye size={18} />
+                  )}
+                </button>
+              </div>
               {fieldErrors.password && (
                 <p className="text-xs text-red-500 mt-1">{fieldErrors.password}</p>
               )}
