@@ -101,12 +101,23 @@ function AuthForm() {
       }
 
       if (mode === "register") {
-        setSuccess("Account created successfully!");
-        setForm({ name: "", email: "", password: "" });
-        setTimeout(() => switchMode("login"), 1500);
+        // Auto-login after registration
+        const loginRes = await apiFetch("/api/auth/login", {
+          method: "POST",
+          body: JSON.stringify({ email: form.email, password: form.password }),
+        });
+        const loginData = await loginRes.json();
+
+        if (loginRes.ok) {
+          login(loginData.accessToken, loginData.user);
+          router.push("/dashboard");
+        } else {
+          setSuccess("Account created! Please log in.");
+          switchMode("login");
+        }
       } else {
         login(data.accessToken, data.user);
-        router.push("/");
+        router.push("/dashboard");
       }
     } catch {
       setError("Could not connect to the server. Please try again later.");
@@ -177,7 +188,7 @@ function AuthForm() {
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 mb-6">
+            <div className="text-center bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 mb-6">
               {error}
             </div>
           )}

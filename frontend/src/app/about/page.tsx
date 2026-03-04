@@ -1,12 +1,8 @@
-import type { Metadata } from "next";
+"use client";
+
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-
-export const metadata: Metadata = {
-  title: "About — Domus",
-  description:
-    "Learn how Domus makes shared living work with transparency, fairness, and harmony.",
-};
+import { FiTarget, FiEye, FiHeart } from "react-icons/fi";
 
 export default function AboutPage() {
   return (
@@ -65,32 +61,17 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {[
               {
-                icon: (
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10" />
-                    <circle cx="12" cy="12" r="6" />
-                    <circle cx="12" cy="12" r="2" />
-                  </svg>
-                ),
+                icon: <FiTarget size={22} />,
                 title: "Transparency",
                 desc: "Every task, expense, and decision is visible to all household members. No guesswork.",
               },
               {
-                icon: (
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                    <circle cx="12" cy="12" r="3" />
-                  </svg>
-                ),
+                icon: <FiEye size={22} />,
                 title: "Fairness",
                 desc: "Automated rotation and balanced splitting ensure equal contribution from everyone.",
               },
               {
-                icon: (
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
-                  </svg>
-                ),
+                icon: <FiHeart size={22} />,
                 title: "Harmony",
                 desc: "By reducing friction, Domus helps roommates focus on what matters — living well together.",
               },
