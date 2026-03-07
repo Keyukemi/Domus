@@ -1,13 +1,28 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import AppNavbar from "@/components/AppNavbar";
 
 export default function DashboardPage() {
-  const { user, logout } = useAuth();
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && user && !user.householdId) {
+      router.push("/household/create");
+    }
+  }, [user, isLoading, router]);
+
+  if (isLoading || !user?.householdId) {
+    return null;
+  }
 
   return (
     <ProtectedRoute>
+      <AppNavbar />
       <div className="min-h-screen flex flex-col items-center justify-center px-4">
         <h1 className="text-3xl font-bold text-text mb-2 font-serif">
           Welcome, {user?.name} 👋
@@ -15,12 +30,6 @@ export default function DashboardPage() {
         <p className="text-text-muted mb-8">
           You're logged in as <span className="font-medium text-text">{user?.email}</span>
         </p>
-        <button
-          onClick={logout}
-          className="bg-primary hover:bg-primary-dark text-white font-medium px-6 py-2.5 rounded-lg transition-colors"
-        >
-          Log Out
-        </button>
       </div>
     </ProtectedRoute>
   );
