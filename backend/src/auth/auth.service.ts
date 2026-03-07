@@ -52,14 +52,14 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Oops! Invalid credentials');
     }
 
     // Compare passwords
     const passwordValid = await bcrypt.compare(dto.password, user.password);
 
     if (!passwordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Oops! Invalid credentials');
     }
 
     // Generate JWT
