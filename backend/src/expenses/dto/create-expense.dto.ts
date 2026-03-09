@@ -1,4 +1,14 @@
-import { IsString, IsNumber, IsDateString, IsArray, IsUUID, IsOptional, MinLength, MaxLength, Min } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsDateString,
+  IsArray,
+  IsUUID,
+  IsOptional,
+  MinLength,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 export class CreateExpenseDto {
   @IsString()

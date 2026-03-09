@@ -1,4 +1,14 @@
-import { Controller, Post, Get, Patch, Delete, Body, Param, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { HouseholdsService } from './households.service';
 import { CreateHouseholdDto } from './dto/create-household.dto';
 import { UpdateHouseholdDto } from './dto/update-household.dto';
@@ -26,17 +36,29 @@ export class HouseholdsController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateHouseholdDto, @Request() req) {
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateHouseholdDto,
+    @Request() req,
+  ) {
     return this.householdsService.update(id, dto, req.user.id);
   }
 
   @Delete(':id/members/:memberId')
-  removeMember(@Param('id') id: string, @Param('memberId') memberId: string, @Request() req) {
+  removeMember(
+    @Param('id') id: string,
+    @Param('memberId') memberId: string,
+    @Request() req,
+  ) {
     return this.householdsService.removeMember(id, memberId, req.user.id);
   }
 
   @Patch(':id/transfer-admin/:memberId')
-  transferAdmin(@Param('id') id: string, @Param('memberId') memberId: string, @Request() req) {
+  transferAdmin(
+    @Param('id') id: string,
+    @Param('memberId') memberId: string,
+    @Request() req,
+  ) {
     return this.householdsService.transferAdmin(id, memberId, req.user.id);
   }
 }

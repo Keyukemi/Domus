@@ -1,7 +1,12 @@
-import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
+import { CreateSettlementDto } from './dto/create-settlement.dto';
 
 @Injectable()
 export class ExpensesService {
@@ -26,7 +31,10 @@ export class ExpensesService {
     return user;
   }
 
-  private calculateSplitAmount(totalAmount: number, memberCount: number): string {
+  private calculateSplitAmount(
+    totalAmount: number,
+    memberCount: number,
+  ): string {
     const splitAmount = totalAmount / memberCount;
     return splitAmount.toFixed(2);
   }
@@ -46,7 +54,10 @@ export class ExpensesService {
       throw new ForbiddenException('All members must belong to your household');
     }
 
-    const splitAmount = this.calculateSplitAmount(dto.amount, dto.splitAmongIds.length);
+    const splitAmount = this.calculateSplitAmount(
+      dto.amount,
+      dto.splitAmongIds.length,
+    );
 
     return this.prisma.expense.create({
       data: {
@@ -104,13 +115,17 @@ export class ExpensesService {
     const user = await this.getUserWithHousehold(userId);
 
     if (expense.paidById !== userId) {
-      throw new ForbiddenException('Only the person who paid can edit this expense');
+      throw new ForbiddenException(
+        'Only the person who paid can edit this expense',
+      );
     }
 
     // If splitAmongIds or amount changed, recalculate splits
     if (dto.splitAmongIds || dto.amount !== undefined) {
-      const splitAmongIds = dto.splitAmongIds || expense.splits.map((s) => s.userId);
-      const amount = dto.amount !== undefined ? dto.amount : Number(expense.amount);
+      const splitAmongIds =
+        dto.splitAmongIds || expense.splits.map((s) => s.userId);
+      const amount =
+        dto.amount !== undefined ? dto.amount : Number(expense.amount);
 
       // Verify all split members belong to the same household
       if (dto.splitAmongIds) {
@@ -122,11 +137,16 @@ export class ExpensesService {
         });
 
         if (validMembers !== splitAmongIds.length) {
-          throw new ForbiddenException('All members must belong to your household');
+          throw new ForbiddenException(
+            'All members must belong to your household',
+          );
         }
       }
 
-      const splitAmount = this.calculateSplitAmount(amount, splitAmongIds.length);
+      const splitAmount = this.calculateSplitAmount(
+        amount,
+        splitAmongIds.length,
+      );
 
       // Delete existing splits and create new ones
       await this.prisma.$transaction(async (tx) => {
@@ -157,7 +177,9 @@ export class ExpensesService {
     const expense = await this.findOne(id, userId);
 
     if (expense.paidById !== userId) {
-      throw new ForbiddenException('Only the person who paid can delete this expense');
+      throw new ForbiddenException(
+        'Only the person who paid can delete this expense',
+      );
     }
 
     await this.prisma.expense.delete({ where: { id } });
@@ -165,16 +187,67 @@ export class ExpensesService {
     return { message: 'Expense deleted successfully' };
   }
 
+  async createSettlement(dto: CreateSettlementDto, userId: string) {
+    const user = await this.getUserWithHousehold(userId);
+
+    if (dto.fromUserId === dto.toUserId) {
+      throw new ForbiddenException('You cannot settle with yourself');
+    }
+
+    // The logged-in user must be either the payer or the receiver
+    if (dto.fromUserId !== userId && dto.toUserId !== userId) {
+      throw new ForbiddenException('You must be part of this settlement');
+    }
+
+    // Verify both users belong to the same household
+    const bothInHousehold = await this.prisma.user.count({
+      where: {
+        id: { in: [dto.fromUserId, dto.toUserId] },
+        householdId: user.householdId,
+      },
+    });
+
+    if (bothInHousehold !== 2) {
+      throw new ForbiddenException('Both users must belong to your household');
+    }
+
+    return this.prisma.settlement.create({
+      data: {
+        amount: dto.amount,
+        fromUserId: dto.fromUserId,
+        toUserId: dto.toUserId,
+        householdId: user.householdId!,
+      },
+      include: {
+        fromUser: { select: { id: true, name: true, email: true } },
+        toUser: { select: { id: true, name: true, email: true } },
+      },
+    });
+  }
+
   async getBalances(userId: string) {
     const user = await this.getUserWithHousehold(userId);
 
-    const expenses = await this.prisma.expense.findMany({
-      where: { householdId: user.householdId! },
-      include: {
-        paidBy: { select: { id: true, name: true, email: true } },
-        splits: { include: { user: { select: { id: true, name: true, email: true } } } },
-      },
-    });
+    const [expenses, settlements] = await Promise.all([
+      this.prisma.expense.findMany({
+        where: { householdId: user.householdId! },
+        include: {
+          paidBy: { select: { id: true, name: true, email: true } },
+          splits: {
+            include: {
+              user: { select: { id: true, name: true, email: true } },
+            },
+          },
+        },
+      }),
+      this.prisma.settlement.findMany({
+        where: { householdId: user.householdId! },
+        include: {
+          fromUser: { select: { id: true, name: true, email: true } },
+          toUser: { select: { id: true, name: true, email: true } },
+        },
+      }),
+    ]);
 
     // Track net balances: debts[debtorId][creditorId] = amount owed
     const debts: Record<string, Record<string, number>> = {};
@@ -195,17 +268,39 @@ export class ExpensesService {
       }
     }
 
+    // Subtract settlements: fromUser paid toUser, reducing fromUser's debt
+    for (const settlement of settlements) {
+      const fromId = settlement.fromUserId;
+      const toId = settlement.toUserId;
+      const amount = Number(settlement.amount);
+
+      if (!debts[fromId]) debts[fromId] = {};
+      if (!debts[fromId][toId]) debts[fromId][toId] = 0;
+      debts[fromId][toId] -= amount;
+    }
+
     // Build a map of all users involved for easy lookup
-    const usersMap: Record<string, { id: string; name: string; email: string }> = {};
+    const usersMap: Record<
+      string,
+      { id: string; name: string; email: string }
+    > = {};
     for (const expense of expenses) {
       usersMap[expense.paidBy.id] = expense.paidBy;
       for (const split of expense.splits) {
         usersMap[split.user.id] = split.user;
       }
     }
+    for (const settlement of settlements) {
+      usersMap[settlement.fromUser.id] = settlement.fromUser;
+      usersMap[settlement.toUser.id] = settlement.toUser;
+    }
 
     // Calculate net balances between each pair
-    const balances: { from: typeof usersMap[string]; to: typeof usersMap[string]; amount: string }[] = [];
+    const balances: {
+      from: (typeof usersMap)[string];
+      to: (typeof usersMap)[string];
+      amount: string;
+    }[] = [];
 
     const processed = new Set<string>();
 

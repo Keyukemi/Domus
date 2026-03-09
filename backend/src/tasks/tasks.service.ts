@@ -1,4 +1,8 @@
-import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
@@ -40,7 +44,9 @@ export class TasksService {
       });
 
       if (validMembers !== dto.assigneeIds.length) {
-        throw new ForbiddenException('All assignees must belong to your household');
+        throw new ForbiddenException(
+          'All assignees must belong to your household',
+        );
       }
     }
 
@@ -95,11 +101,12 @@ export class TasksService {
     const task = await this.findOne(id, userId);
     const user = await this.getUserWithHousehold(userId);
 
-    const isStatusOnlyUpdate = dto.status !== undefined
-      && dto.title === undefined
-      && dto.description === undefined
-      && dto.deadline === undefined
-      && dto.assigneeIds === undefined;
+    const isStatusOnlyUpdate =
+      dto.status !== undefined &&
+      dto.title === undefined &&
+      dto.description === undefined &&
+      dto.deadline === undefined &&
+      dto.assigneeIds === undefined;
 
     if (!isStatusOnlyUpdate && task.createdById !== userId) {
       throw new ForbiddenException('Only the task creator can edit this task');
@@ -116,7 +123,9 @@ export class TasksService {
         });
 
         if (validMembers !== dto.assigneeIds.length) {
-          throw new ForbiddenException('All assignees must belong to your household');
+          throw new ForbiddenException(
+            'All assignees must belong to your household',
+          );
         }
       }
 
@@ -147,7 +156,9 @@ export class TasksService {
     const task = await this.findOne(id, userId);
 
     if (task.createdById !== userId) {
-      throw new ForbiddenException('Only the task creator can delete this task');
+      throw new ForbiddenException(
+        'Only the task creator can delete this task',
+      );
     }
 
     await this.prisma.task.delete({ where: { id } });

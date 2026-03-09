@@ -25,10 +25,11 @@ model Household {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  members  User[]
-  tasks    Task[]
-  expenses Expense[]
-  notes    Note[]
+  members     User[]
+  tasks       Task[]
+  expenses    Expense[]
+  settlements Settlement[]
+  notes       Note[]
 
   @@map("households")
 }
@@ -46,9 +47,11 @@ model User {
   household     Household?     @relation(fields: [householdId], references: [id])
   createdTasks  Task[]         @relation("TaskCreator")
   assignedTasks TaskAssignee[]
-  paidExpenses  Expense[]      @relation("ExpensePayer")
-  expenseSplits ExpenseSplit[]
-  notes         Note[]
+  paidExpenses    Expense[]      @relation("ExpensePayer")
+  expenseSplits   ExpenseSplit[]
+  settlementsSent Settlement[]   @relation("SettlementFrom")
+  settlementsRecv Settlement[]   @relation("SettlementTo")
+  notes           Note[]
 
   @@map("users")
 }
@@ -111,6 +114,21 @@ model ExpenseSplit {
   user    User    @relation(fields: [userId], references: [id])
 
   @@map("expense_splits")
+}
+
+model Settlement {
+  id          String   @id @default(uuid())
+  amount      Decimal  @db.Decimal(10, 2)
+  fromUserId  String
+  toUserId    String
+  householdId String
+  createdAt   DateTime @default(now())
+
+  fromUser  User      @relation("SettlementFrom", fields: [fromUserId], references: [id])
+  toUser    User      @relation("SettlementTo", fields: [toUserId], references: [id])
+  household Household @relation(fields: [householdId], references: [id])
+
+  @@map("settlements")
 }
 
 model Note {

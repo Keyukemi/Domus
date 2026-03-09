@@ -1,4 +1,13 @@
-import { IsString, IsOptional, IsDateString, IsArray, IsUUID, IsEnum, MinLength, MaxLength } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsDateString,
+  IsArray,
+  IsUUID,
+  IsEnum,
+  MinLength,
+  MaxLength,
+} from 'class-validator';
 import { TaskStatus } from '../../generated/prisma/enums';
 
 export class UpdateTaskDto {

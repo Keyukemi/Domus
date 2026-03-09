@@ -9,7 +9,14 @@ import { TasksModule } from './tasks/tasks.module';
 import { ExpensesModule } from './expenses/expenses.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule, UsersModule, HouseholdsModule, TasksModule, ExpensesModule],
+  imports: [
+    PrismaModule,
+    AuthModule,
+    UsersModule,
+    HouseholdsModule,
+    TasksModule,
+    ExpensesModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
