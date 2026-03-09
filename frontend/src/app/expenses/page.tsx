@@ -6,6 +6,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import AppNavbar from "@/components/AppNavbar";
 import Link from "next/link";
 import { FiPlus, FiEdit2, FiTrash2, FiTag, FiDollarSign } from "react-icons/fi";
+import ConfirmModal from "@/components/ConfirmModal";
 
 interface Split {
   user: { id: string; name: string; email: string };
@@ -37,6 +38,7 @@ function ExpensesList() {
   const [error, setError] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [categories, setCategories] = useState<string[]>([]);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const fetchExpenses = useCallback(async () => {
     try {
@@ -66,11 +68,11 @@ function ExpensesList() {
     fetchExpenses();
   }, [fetchExpenses]);
 
-  async function handleDelete(expenseId: string) {
-    if (!confirm("Are you sure you want to delete this expense?")) return;
+  async function handleDelete() {
+    if (!deleteId) return;
 
     try {
-      const res = await apiFetch(`/api/expenses/${expenseId}`, { method: "DELETE" });
+      const res = await apiFetch(`/api/expenses/${deleteId}`, { method: "DELETE" });
 
       if (res.ok) {
         await fetchExpenses();
@@ -80,6 +82,8 @@ function ExpensesList() {
       }
     } catch {
       setError("Could not connect to the server.");
+    } finally {
+      setDeleteId(null);
     }
   }
 
@@ -205,7 +209,7 @@ function ExpensesList() {
                       )}
                     </div>
 
-                    <div className="flex items-center gap-1 flex-shrink-0">
+                    <div className="flex items-center gap-1 shrink-0">
                       <Link
                         href={`/expenses/${expense.id}/edit`}
                         className="p-1.5 text-text-muted hover:text-primary transition-colors"
@@ -214,7 +218,7 @@ function ExpensesList() {
                         <FiEdit2 size={16} />
                       </Link>
                       <button
-                        onClick={() => handleDelete(expense.id)}
+                        onClick={() => setDeleteId(expense.id)}
                         className="p-1.5 text-text-muted hover:text-red-500 transition-colors"
                         title="Delete expense"
                       >
@@ -228,6 +232,16 @@ function ExpensesList() {
           )}
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={!!deleteId}
+        title="Delete Expense"
+        message="Are you sure you want to delete this expense? This cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteId(null)}
+      />
     </>
   );
 }

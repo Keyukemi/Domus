@@ -7,6 +7,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import AppNavbar from "@/components/AppNavbar";
 import Link from "next/link";
 import { FiPlus, FiCheckCircle, FiCircle, FiEdit2, FiTrash2, FiClock } from "react-icons/fi";
+import ConfirmModal from "@/components/ConfirmModal";
 
 interface Assignee {
   user: { id: string; name: string; email: string };
@@ -37,6 +38,7 @@ function TasksList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "PENDING" | "COMPLETED">("ALL");
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -80,11 +82,11 @@ function TasksList() {
     }
   }
 
-  async function handleDelete(taskId: string) {
-    if (!confirm("Are you sure you want to delete this task?")) return;
+  async function handleDelete() {
+    if (!deleteId) return;
 
     try {
-      const res = await apiFetch(`/api/tasks/${taskId}`, { method: "DELETE" });
+      const res = await apiFetch(`/api/tasks/${deleteId}`, { method: "DELETE" });
 
       if (res.ok) {
         await fetchTasks();
@@ -94,6 +96,8 @@ function TasksList() {
       }
     } catch {
       setError("Could not connect to the server.");
+    } finally {
+      setDeleteId(null);
     }
   }
 
@@ -229,7 +233,7 @@ function TasksList() {
                         <FiEdit2 size={16} />
                       </Link>
                       <button
-                        onClick={() => handleDelete(task.id)}
+                        onClick={() => setDeleteId(task.id)}
                         className="p-1.5 text-text-muted hover:text-red-500 transition-colors"
                         title="Delete task"
                       >
@@ -243,6 +247,16 @@ function TasksList() {
           )}
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={!!deleteId}
+        title="Delete Task"
+        message="Are you sure you want to delete this task? This cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteId(null)}
+      />
     </>
   );
 }
