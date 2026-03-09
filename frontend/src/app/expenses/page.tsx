@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/api";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppNavbar from "@/components/AppNavbar";
@@ -33,6 +34,7 @@ export default function ExpensesPage() {
 }
 
 function ExpensesList() {
+  const { user } = useAuth();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -209,22 +211,24 @@ function ExpensesList() {
                       )}
                     </div>
 
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Link
-                        href={`/expenses/${expense.id}/edit`}
-                        className="p-1.5 text-text-muted hover:text-primary transition-colors"
-                        title="Edit expense"
-                      >
-                        <FiEdit2 size={16} />
-                      </Link>
-                      <button
-                        onClick={() => setDeleteId(expense.id)}
-                        className="p-1.5 text-text-muted hover:text-red-500 transition-colors"
-                        title="Delete expense"
-                      >
-                        <FiTrash2 size={16} />
-                      </button>
-                    </div>
+                    {user?.id === expense.paidBy.id && (
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Link
+                          href={`/expenses/${expense.id}/edit`}
+                          className="p-1.5 text-text-muted hover:text-primary transition-colors"
+                          title="Edit expense"
+                        >
+                          <FiEdit2 size={16} />
+                        </Link>
+                        <button
+                          onClick={() => setDeleteId(expense.id)}
+                          className="p-1.5 text-text-muted hover:text-red-500 transition-colors"
+                          title="Delete expense"
+                        >
+                          <FiTrash2 size={16} />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

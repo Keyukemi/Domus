@@ -49,6 +49,10 @@ function EditTask() {
       const householdData = await householdRes.json();
 
       if (taskRes.ok) {
+        if (taskData.createdBy.id !== user?.id) {
+          router.push("/tasks");
+          return;
+        }
         setTitle(taskData.title);
         setDescription(taskData.description || "");
         setDeadline(taskData.deadline ? taskData.deadline.split("T")[0] : "");

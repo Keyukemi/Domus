@@ -224,22 +224,24 @@ function TasksList() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <Link
-                        href={`/tasks/${task.id}/edit`}
-                        className="p-1.5 text-text-muted hover:text-primary transition-colors"
-                        title="Edit task"
-                      >
-                        <FiEdit2 size={16} />
-                      </Link>
-                      <button
-                        onClick={() => setDeleteId(task.id)}
-                        className="p-1.5 text-text-muted hover:text-red-500 transition-colors"
-                        title="Delete task"
-                      >
-                        <FiTrash2 size={16} />
-                      </button>
-                    </div>
+                    {user?.id === task.createdBy.id && (
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <Link
+                          href={`/tasks/${task.id}/edit`}
+                          className="p-1.5 text-text-muted hover:text-primary transition-colors"
+                          title="Edit task"
+                        >
+                          <FiEdit2 size={16} />
+                        </Link>
+                        <button
+                          onClick={() => setDeleteId(task.id)}
+                          className="p-1.5 text-text-muted hover:text-red-500 transition-colors"
+                          title="Delete task"
+                        >
+                          <FiTrash2 size={16} />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

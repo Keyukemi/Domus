@@ -50,6 +50,10 @@ function EditExpense() {
       const householdData = await householdRes.json();
 
       if (expenseRes.ok) {
+        if (expenseData.paidBy.id !== user?.id) {
+          router.push("/expenses");
+          return;
+        }
         setDescription(expenseData.description);
         setAmount(Number(expenseData.amount).toString());
         setCategory(expenseData.category);

@@ -103,6 +103,10 @@ export class ExpensesService {
     const expense = await this.findOne(id, userId);
     const user = await this.getUserWithHousehold(userId);
 
+    if (expense.paidById !== userId) {
+      throw new ForbiddenException('Only the person who paid can edit this expense');
+    }
+
     // If splitAmongIds or amount changed, recalculate splits
     if (dto.splitAmongIds || dto.amount !== undefined) {
       const splitAmongIds = dto.splitAmongIds || expense.splits.map((s) => s.userId);
@@ -150,7 +154,11 @@ export class ExpensesService {
   }
 
   async remove(id: string, userId: string) {
-    await this.findOne(id, userId);
+    const expense = await this.findOne(id, userId);
+
+    if (expense.paidById !== userId) {
+      throw new ForbiddenException('Only the person who paid can delete this expense');
+    }
 
     await this.prisma.expense.delete({ where: { id } });
 
