@@ -6,6 +6,7 @@ import { apiFetch } from "@/lib/api";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { FiCopy, FiCheck, FiUserMinus, FiArrowRight } from "react-icons/fi";
 import AppNavbar from "@/components/AppNavbar";
+import ConfirmModal from "@/components/ConfirmModal";
 
 interface Member {
   id: string;
@@ -257,10 +258,12 @@ function MembersCard({
   setError: (msg: string) => void;
 }) {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{
+    type: "remove" | "transfer";
+    memberId: string;
+  } | null>(null);
 
   async function handleRemove(memberId: string) {
-    if (!confirm("Are you sure you want to remove this member?")) return;
-
     setActionLoading(memberId);
     setError("");
 
@@ -283,8 +286,6 @@ function MembersCard({
   }
 
   async function handleTransferAdmin(memberId: string) {
-    if (!confirm("Are you sure you want to transfer admin rights? You will become a regular member.")) return;
-
     setActionLoading(memberId);
     setError("");
 
@@ -304,6 +305,18 @@ function MembersCard({
       setError("Could not connect to the server.");
     } finally {
       setActionLoading(null);
+    }
+  }
+
+  function handleConfirm() {
+    if (!confirmAction) return;
+    const { type, memberId } = confirmAction;
+    setConfirmAction(null);
+
+    if (type === "remove") {
+      handleRemove(memberId);
+    } else {
+      handleTransferAdmin(memberId);
     }
   }
 
@@ -342,7 +355,7 @@ function MembersCard({
               {isAdmin && member.id !== currentUserId && (
                 <div className="flex gap-1">
                   <button
-                    onClick={() => handleTransferAdmin(member.id)}
+                    onClick={() => setConfirmAction({ type: "transfer", memberId: member.id })}
                     disabled={actionLoading === member.id}
                     title="Transfer admin"
                     className="p-1.5 text-text-muted hover:text-primary transition-colors disabled:opacity-50"
@@ -350,7 +363,7 @@ function MembersCard({
                     <FiArrowRight size={16} />
                   </button>
                   <button
-                    onClick={() => handleRemove(member.id)}
+                    onClick={() => setConfirmAction({ type: "remove", memberId: member.id })}
                     disabled={actionLoading === member.id}
                     title="Remove member"
                     className="p-1.5 text-text-muted hover:text-red-500 transition-colors disabled:opacity-50"
@@ -363,6 +376,20 @@ function MembersCard({
           </div>
         ))}
       </div>
+
+      <ConfirmModal
+        isOpen={confirmAction !== null}
+        title={confirmAction?.type === "remove" ? "Remove Member" : "Transfer Admin Rights"}
+        message={
+          confirmAction?.type === "remove"
+            ? "Are you sure you want to remove this member from the household?"
+            : "Are you sure you want to transfer admin rights? You will become a regular member."
+        }
+        confirmLabel={confirmAction?.type === "remove" ? "Remove" : "Transfer"}
+        variant={confirmAction?.type === "remove" ? "danger" : "normal"}
+        onConfirm={handleConfirm}
+        onCancel={() => setConfirmAction(null)}
+      />
     </div>
   );
 }
