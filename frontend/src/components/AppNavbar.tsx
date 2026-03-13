@@ -1,67 +1,131 @@
 "use client";
 
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { FiLogOut, FiSettings, FiHome, FiCheckSquare, FiDollarSign } from "react-icons/fi";
+import {
+  FiLogOut,
+  FiSettings,
+  FiHome,
+  FiCheckSquare,
+  FiDollarSign,
+  FiFileText,
+  FiMenu,
+  FiX,
+} from "react-icons/fi";
 
 export default function AppNavbar() {
   const { user, logout } = useAuth();
+  const pathname = usePathname();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // Close menu on route change
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
+
+  // Close menu on Escape key
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setMenuOpen(false);
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [menuOpen]);
+
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
+
+  const navLinks = [
+    { href: "/dashboard", label: "Dashboard", icon: <FiHome size={18} /> },
+    ...(user?.householdId
+      ? [
+          { href: "/tasks", label: "Tasks", icon: <FiCheckSquare size={18} /> },
+          { href: "/expenses", label: "Expenses", icon: <FiDollarSign size={18} /> },
+          { href: "/notes", label: "Notes", icon: <FiFileText size={18} /> },
+          { href: "/household/settings", label: "Household", icon: <FiSettings size={18} /> },
+        ]
+      : []),
+  ];
 
   return (
-    <nav className="flex items-center justify-between px-6 md:px-8 py-4 border-b border-border-light max-w-7xl mx-auto">
-      <Link href="/dashboard" className="flex items-center gap-2">
-        <Image src="/Domus_l.png" alt="Domus logo" width={32} height={32} />
-        <span className="text-lg font-semibold text-text">Domus</span>
-      </Link>
-
-      <div className="flex items-center gap-4 md:gap-6">
-        <Link
-          href="/dashboard"
-          className="flex items-center gap-1.5 text-sm text-text-muted hover:text-text transition-colors"
-        >
-          <FiHome size={16} />
-          <span className="hidden sm:inline">Dashboard</span>
+    <nav className="border-b border-border-light">
+      <div className="flex items-center justify-between px-6 md:px-8 py-4 max-w-7xl mx-auto">
+        {/* Logo */}
+        <Link href="/dashboard" className="flex items-center gap-2">
+          <Image src="/Domus_l.png" alt="Domus logo" width={32} height={32} />
+          <span className="text-lg font-semibold text-text">Domus</span>
         </Link>
 
-        {user?.householdId && (
-          <Link
-            href="/tasks"
-            className="flex items-center gap-1.5 text-sm text-text-muted hover:text-text transition-colors"
-          >
-            <FiCheckSquare size={16} />
-            <span className="hidden sm:inline">Tasks</span>
-          </Link>
-        )}
+        {/* Desktop nav links */}
+        <div className="hidden sm:flex items-center gap-6">
+          {navLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`flex items-center gap-1.5 text-sm transition-colors ${
+                pathname === link.href
+                  ? "text-primary font-medium"
+                  : "text-text-muted hover:text-text"
+              }`}
+            >
+              {link.icon}
+              {link.label}
+            </Link>
+          ))}
 
-        {user?.householdId && (
-          <Link
-            href="/expenses"
-            className="flex items-center gap-1.5 text-sm text-text-muted hover:text-text transition-colors"
+          <button
+            onClick={logout}
+            className="flex items-center gap-1.5 text-sm text-text-muted hover:text-red-500 transition-colors"
           >
-            <FiDollarSign size={16} />
-            <span className="hidden sm:inline">Expenses</span>
-          </Link>
-        )}
+            <FiLogOut size={16} />
+            Logout
+          </button>
+        </div>
 
-        {user?.householdId && (
-          <Link
-            href="/household/settings"
-            className="flex items-center gap-1.5 text-sm text-text-muted hover:text-text transition-colors"
-          >
-            <FiSettings size={16} />
-            <span className="hidden sm:inline">Household</span>
-          </Link>
-        )}
-
+        {/* Mobile hamburger button */}
         <button
-          onClick={logout}
-          className="flex items-center gap-1.5 text-sm text-text-muted hover:text-red-500 transition-colors"
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="sm:hidden p-2 text-text-muted hover:text-text transition-colors"
+          aria-label="Toggle menu"
         >
-          <FiLogOut size={16} />
-          <span className="hidden sm:inline">Logout</span>
+          {menuOpen ? <FiX size={22} /> : <FiMenu size={22} />}
         </button>
       </div>
+
+      {/* Mobile dropdown menu */}
+      {menuOpen && (
+        <div className="sm:hidden border-t border-border-light" onClick={closeMenu}>
+          <div className="px-6 py-3 space-y-1">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm transition-colors ${
+                  pathname === link.href
+                    ? "text-primary bg-primary/5 font-medium"
+                    : "text-text-muted hover:text-text hover:bg-bg-feature"
+                }`}
+              >
+                {link.icon}
+                {link.label}
+              </Link>
+            ))}
+
+            <button
+              onClick={logout}
+              className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm text-text-muted hover:text-red-500 hover:bg-red-50 transition-colors w-full"
+            >
+              <FiLogOut size={18} />
+              Logout
+            </button>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }

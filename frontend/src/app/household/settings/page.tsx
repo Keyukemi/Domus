@@ -6,6 +6,7 @@ import { apiFetch } from "@/lib/api";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { FiCopy, FiCheck, FiUserMinus, FiArrowRight } from "react-icons/fi";
 import AppNavbar from "@/components/AppNavbar";
+import ConfirmModal from "@/components/ConfirmModal";
 
 interface Member {
   id: string;
@@ -164,30 +165,32 @@ function HouseholdInfoCard({
     <div className="bg-bg-card border border-border-light rounded-2xl p-6">
       <p className="text-sm font-medium text-text-muted mb-2">Household Name</p>
       {editing ? (
-        <div className="flex gap-3">
+        <div className="space-y-3">
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             maxLength={100}
-            className="flex-1 px-4 py-2 rounded-lg border border-border text-sm text-text bg-bg outline-none focus:border-primary"
+            className="w-full px-4 py-2 rounded-lg border border-border text-sm text-text bg-bg outline-none focus:border-primary"
           />
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50"
-          >
-            {saving ? "Saving..." : "Save"}
-          </button>
-          <button
-            onClick={() => {
-              setName(household.name);
-              setEditing(false);
-            }}
-            className="px-4 py-2 border border-border text-sm font-medium rounded-lg text-text hover:bg-bg-feature transition-colors"
-          >
-            Cancel
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex-1 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50"
+            >
+              {saving ? "Saving..." : "Save"}
+            </button>
+            <button
+              onClick={() => {
+                setName(household.name);
+                setEditing(false);
+              }}
+              className="flex-1 px-4 py-2 border border-border text-sm font-medium rounded-lg text-text hover:bg-bg-feature transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       ) : (
         <div className="flex items-center justify-between">
@@ -257,10 +260,12 @@ function MembersCard({
   setError: (msg: string) => void;
 }) {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{
+    type: "remove" | "transfer";
+    memberId: string;
+  } | null>(null);
 
   async function handleRemove(memberId: string) {
-    if (!confirm("Are you sure you want to remove this member?")) return;
-
     setActionLoading(memberId);
     setError("");
 
@@ -283,8 +288,6 @@ function MembersCard({
   }
 
   async function handleTransferAdmin(memberId: string) {
-    if (!confirm("Are you sure you want to transfer admin rights? You will become a regular member.")) return;
-
     setActionLoading(memberId);
     setError("");
 
@@ -304,6 +307,18 @@ function MembersCard({
       setError("Could not connect to the server.");
     } finally {
       setActionLoading(null);
+    }
+  }
+
+  function handleConfirm() {
+    if (!confirmAction) return;
+    const { type, memberId } = confirmAction;
+    setConfirmAction(null);
+
+    if (type === "remove") {
+      handleRemove(memberId);
+    } else {
+      handleTransferAdmin(memberId);
     }
   }
 
@@ -342,7 +357,7 @@ function MembersCard({
               {isAdmin && member.id !== currentUserId && (
                 <div className="flex gap-1">
                   <button
-                    onClick={() => handleTransferAdmin(member.id)}
+                    onClick={() => setConfirmAction({ type: "transfer", memberId: member.id })}
                     disabled={actionLoading === member.id}
                     title="Transfer admin"
                     className="p-1.5 text-text-muted hover:text-primary transition-colors disabled:opacity-50"
@@ -350,7 +365,7 @@ function MembersCard({
                     <FiArrowRight size={16} />
                   </button>
                   <button
-                    onClick={() => handleRemove(member.id)}
+                    onClick={() => setConfirmAction({ type: "remove", memberId: member.id })}
                     disabled={actionLoading === member.id}
                     title="Remove member"
                     className="p-1.5 text-text-muted hover:text-red-500 transition-colors disabled:opacity-50"
@@ -363,6 +378,20 @@ function MembersCard({
           </div>
         ))}
       </div>
+
+      <ConfirmModal
+        isOpen={confirmAction !== null}
+        title={confirmAction?.type === "remove" ? "Remove Member" : "Transfer Admin Rights"}
+        message={
+          confirmAction?.type === "remove"
+            ? "Are you sure you want to remove this member from the household?"
+            : "Are you sure you want to transfer admin rights? You will become a regular member."
+        }
+        confirmLabel={confirmAction?.type === "remove" ? "Remove" : "Transfer"}
+        variant={confirmAction?.type === "remove" ? "danger" : "normal"}
+        onConfirm={handleConfirm}
+        onCancel={() => setConfirmAction(null)}
+      />
     </div>
   );
 }

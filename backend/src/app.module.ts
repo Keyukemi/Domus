@@ -7,6 +7,8 @@ import { UsersModule } from './users/users.module';
 import { HouseholdsModule } from './households/households.module';
 import { TasksModule } from './tasks/tasks.module';
 import { ExpensesModule } from './expenses/expenses.module';
+import { NotesModule } from './notes/notes.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -16,6 +18,8 @@ import { ExpensesModule } from './expenses/expenses.module';
     HouseholdsModule,
     TasksModule,
     ExpensesModule,
+    NotesModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],

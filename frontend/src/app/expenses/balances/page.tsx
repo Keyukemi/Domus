@@ -135,9 +135,9 @@ function BalancesSummary() {
                     key={index}
                     className="bg-bg-card border border-border-light rounded-2xl p-5"
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-100 text-red-600 text-sm font-medium">
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-100 text-red-600 text-sm font-medium flex-shrink-0">
                           {balance.from.name.charAt(0).toUpperCase()}
                         </span>
                         <div>
@@ -147,19 +147,19 @@ function BalancesSummary() {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <FiArrowRight size={16} className="text-text-muted" />
+                        <FiArrowRight size={16} className="text-text-muted hidden sm:block" />
                         <span className="text-sm font-semibold text-primary">
                           ${balance.amount}
                         </span>
-                        <FiArrowRight size={16} className="text-text-muted" />
+                        <FiArrowRight size={16} className="text-text-muted hidden sm:block" />
                       </div>
 
                       <div className="flex items-center gap-3">
-                        <div className="text-right">
+                        <div className="text-right sm:text-right text-left">
                           <p className="text-sm font-medium text-text">{balance.to.name}</p>
                           <p className="text-xs text-text-muted">is owed</p>
                         </div>
-                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-600 text-sm font-medium">
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-600 text-sm font-medium flex-shrink-0">
                           {balance.to.name.charAt(0).toUpperCase()}
                         </span>
                       </div>
