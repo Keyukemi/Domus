@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-import { FiLogOut, FiSettings, FiHome, FiCheckSquare, FiDollarSign } from "react-icons/fi";
+import { FiLogOut, FiSettings, FiHome, FiCheckSquare, FiDollarSign, FiFileText } from "react-icons/fi";
 
 export default function AppNavbar() {
   const { user, logout } = useAuth();
@@ -41,6 +41,16 @@ export default function AppNavbar() {
           >
             <FiDollarSign size={16} />
             <span className="hidden sm:inline">Expenses</span>
+          </Link>
+        )}
+
+        {user?.householdId && (
+          <Link
+            href="/notes"
+            className="flex items-center gap-1.5 text-sm text-text-muted hover:text-text transition-colors"
+          >
+            <FiFileText size={16} />
+            <span className="hidden sm:inline">Notes</span>
           </Link>
         )}
 

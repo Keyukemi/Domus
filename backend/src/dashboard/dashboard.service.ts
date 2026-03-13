@@ -28,46 +28,70 @@ export class DashboardService {
     const sevenDaysFromNow = new Date();
     sevenDaysFromNow.setDate(now.getDate() + 7);
 
-    const [pendingTasksCount, upcomingDeadlines, balances, recentNotes] =
-      await Promise.all([
-        this.prisma.task.count({
-          where: { householdId, status: TaskStatus.PENDING },
-        }),
+    const [
+      pendingTasksCount,
+      upcomingDeadlines,
+      balances,
+      recentNotes,
+      recentExpenses,
+    ] = await Promise.all([
+      this.prisma.task.count({
+        where: { householdId, status: TaskStatus.PENDING },
+      }),
 
-        this.prisma.task.findMany({
-          where: {
-            householdId,
-            status: TaskStatus.PENDING,
-            deadline: { gte: now, lte: sevenDaysFromNow },
-          },
-          include: {
-            assignees: {
-              include: {
-                user: { select: { id: true, name: true, email: true } },
-              },
+      this.prisma.task.findMany({
+        where: {
+          householdId,
+          status: TaskStatus.PENDING,
+          deadline: { gte: now, lte: sevenDaysFromNow },
+        },
+        include: {
+          assignees: {
+            include: {
+              user: { select: { id: true, name: true, email: true } },
             },
           },
-          orderBy: { deadline: 'asc' },
-          take: 5,
-        }),
+        },
+        orderBy: { deadline: 'asc' },
+        take: 5,
+      }),
 
-        this.expensesService.getBalances(userId),
+      this.expensesService.getBalances(userId),
 
-        this.prisma.note.findMany({
-          where: { householdId },
-          include: {
-            author: { select: { id: true, name: true, email: true } },
-          },
-          orderBy: { createdAt: 'desc' },
-          take: 5,
-        }),
-      ]);
+      this.prisma.note.findMany({
+        where: { householdId },
+        include: {
+          author: { select: { id: true, name: true, email: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+      }),
+
+      this.prisma.expense.findMany({
+        where: { householdId },
+        include: {
+          paidBy: { select: { id: true, name: true, email: true } },
+        },
+        orderBy: { date: 'desc' },
+        take: 5,
+      }),
+    ]);
+
+    // Calculate the current user's net balance from the balances list
+    let myBalance = 0;
+    for (const b of balances) {
+      const amount = parseFloat(b.amount);
+      if (b.to.id === userId) myBalance += amount;
+      if (b.from.id === userId) myBalance -= amount;
+    }
 
     return {
       pendingTasksCount,
       upcomingDeadlines,
       balances,
+      myBalance: myBalance.toFixed(2),
       recentNotes,
+      recentExpenses,
     };
   }
 }
