@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Nunito, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
@@ -21,12 +21,15 @@ export const metadata: Metadata = {
   description:
     "Domus centralizes task management, expense tracking, and communication for shared households.",
   manifest: "/manifest.json",
-  themeColor: "#2D6A4F",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "Domus",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#2D6A4F",
 };
 
 export default function RootLayout({
