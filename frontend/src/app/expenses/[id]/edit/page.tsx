@@ -13,24 +13,25 @@ interface Member {
   email: string;
 }
 
-export default function EditTaskPage() {
+export default function EditExpensePage() {
   return (
     <ProtectedRoute>
-      <EditTask />
+      <EditExpense />
     </ProtectedRoute>
   );
 }
 
-function EditTask() {
+function EditExpense() {
   const router = useRouter();
   const params = useParams();
-  const taskId = params.id as string;
+  const expenseId = params.id as string;
   const { user } = useAuth();
 
-  const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [deadline, setDeadline] = useState("");
-  const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
+  const [amount, setAmount] = useState("");
+  const [category, setCategory] = useState("");
+  const [date, setDate] = useState("");
+  const [splitAmongIds, setSplitAmongIds] = useState<string[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -40,25 +41,26 @@ function EditTask() {
     if (!user?.householdId) return;
 
     try {
-      const [taskRes, householdRes] = await Promise.all([
-        apiFetch(`/api/tasks/${taskId}`),
+      const [expenseRes, householdRes] = await Promise.all([
+        apiFetch(`/api/expenses/${expenseId}`),
         apiFetch(`/api/households/${user.householdId}`),
       ]);
 
-      const taskData = await taskRes.json();
+      const expenseData = await expenseRes.json();
       const householdData = await householdRes.json();
 
-      if (taskRes.ok) {
-        if (taskData.createdBy.id !== user?.id) {
-          router.push("/tasks");
+      if (expenseRes.ok) {
+        if (expenseData.paidBy.id !== user?.id) {
+          router.push("/expenses");
           return;
         }
-        setTitle(taskData.title);
-        setDescription(taskData.description || "");
-        setDeadline(taskData.deadline ? taskData.deadline.split("T")[0] : "");
-        setAssigneeIds(taskData.assignees.map((a: { user: Member }) => a.user.id));
+        setDescription(expenseData.description);
+        setAmount(Number(expenseData.amount).toString());
+        setCategory(expenseData.category);
+        setDate(expenseData.date.split("T")[0]);
+        setSplitAmongIds(expenseData.splits.map((s: { user: Member }) => s.user.id));
       } else {
-        setError(taskData.message || "Failed to load task.");
+        setError(expenseData.message || "Failed to load expense.");
       }
 
       if (householdRes.ok) {
@@ -69,7 +71,7 @@ function EditTask() {
     } finally {
       setLoading(false);
     }
-  }, [taskId, user?.householdId]);
+  }, [expenseId, user?.householdId]);
 
   useEffect(() => {
     fetchData();
@@ -81,21 +83,22 @@ function EditTask() {
     setError("");
 
     try {
-      const res = await apiFetch(`/api/tasks/${taskId}`, {
+      const res = await apiFetch(`/api/expenses/${expenseId}`, {
         method: "PATCH",
         body: JSON.stringify({
-          title: title.trim(),
-          description: description.trim() || undefined,
-          deadline: deadline || undefined,
-          assigneeIds,
+          description: description.trim(),
+          amount: parseFloat(amount),
+          category: category.trim(),
+          date,
+          splitAmongIds,
         }),
       });
 
       if (res.ok) {
-        router.push("/tasks");
+        router.push("/expenses");
       } else {
         const data = await res.json();
-        setError(data.message || "Failed to update task.");
+        setError(data.message || "Failed to update expense.");
       }
     } catch {
       setError("Could not connect to the server.");
@@ -104,13 +107,17 @@ function EditTask() {
     }
   }
 
-  function toggleAssignee(memberId: string) {
-    setAssigneeIds((prev) =>
+  function toggleMember(memberId: string) {
+    setSplitAmongIds((prev) =>
       prev.includes(memberId)
         ? prev.filter((id) => id !== memberId)
         : [...prev, memberId]
     );
   }
+
+  const splitPreview = splitAmongIds.length > 0 && amount
+    ? (parseFloat(amount) / splitAmongIds.length).toFixed(2)
+    : null;
 
   if (loading) {
     return (
@@ -128,7 +135,7 @@ function EditTask() {
       <AppNavbar />
       <div className="min-h-screen px-4 py-12">
         <div className="max-w-xl mx-auto">
-          <h1 className="text-2xl font-bold text-text font-serif mb-6">Edit Task</h1>
+          <h1 className="text-2xl font-bold text-text font-serif mb-6">Edit Expense</h1>
 
           {error && (
             <div className="text-center bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 mb-6">
@@ -138,14 +145,14 @@ function EditTask() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="title" className="block text-sm font-medium text-text-muted mb-1.5">
-                Title *
+              <label htmlFor="description" className="block text-sm font-medium text-text-muted mb-1.5">
+                Description *
               </label>
               <input
-                id="title"
+                id="description"
                 type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
                 required
                 maxLength={200}
                 className="w-full px-4 py-2 rounded-lg border border-border text-sm text-text bg-bg outline-none focus:border-primary"
@@ -153,27 +160,46 @@ function EditTask() {
             </div>
 
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-text-muted mb-1.5">
-                Description
+              <label htmlFor="amount" className="block text-sm font-medium text-text-muted mb-1.5">
+                Amount *
               </label>
-              <textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={3}
-                className="w-full px-4 py-2 rounded-lg border border-border text-sm text-text bg-bg outline-none focus:border-primary resize-none"
+              <input
+                id="amount"
+                type="number"
+                step="0.01"
+                min="0.01"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                required
+                className="w-full px-4 py-2 rounded-lg border border-border text-sm text-text bg-bg outline-none focus:border-primary"
               />
             </div>
 
             <div>
-              <label htmlFor="deadline" className="block text-sm font-medium text-text-muted mb-1.5">
-                Deadline
+              <label htmlFor="category" className="block text-sm font-medium text-text-muted mb-1.5">
+                Category *
               </label>
               <input
-                id="deadline"
+                id="category"
+                type="text"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                required
+                maxLength={50}
+                className="w-full px-4 py-2 rounded-lg border border-border text-sm text-text bg-bg outline-none focus:border-primary"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="date" className="block text-sm font-medium text-text-muted mb-1.5">
+                Date *
+              </label>
+              <input
+                id="date"
                 type="date"
-                value={deadline}
-                onChange={(e) => setDeadline(e.target.value)}
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                required
                 className="w-full px-4 py-2 rounded-lg border border-border text-sm text-text bg-bg outline-none focus:border-primary"
               />
             </div>
@@ -181,7 +207,7 @@ function EditTask() {
             {members.length > 0 && (
               <div>
                 <label className="block text-sm font-medium text-text-muted mb-1.5">
-                  Assign to
+                  Split among *
                 </label>
                 <div className="space-y-2">
                   {members.map((member) => (
@@ -191,8 +217,8 @@ function EditTask() {
                     >
                       <input
                         type="checkbox"
-                        checked={assigneeIds.includes(member.id)}
-                        onChange={() => toggleAssignee(member.id)}
+                        checked={splitAmongIds.includes(member.id)}
+                        onChange={() => toggleMember(member.id)}
                         className="accent-primary"
                       />
                       <div>
@@ -202,20 +228,26 @@ function EditTask() {
                     </label>
                   ))}
                 </div>
+
+                {splitPreview && (
+                  <p className="text-xs text-text-muted mt-2">
+                    ${splitPreview} per person ({splitAmongIds.length} {splitAmongIds.length === 1 ? "person" : "people"})
+                  </p>
+                )}
               </div>
             )}
 
             <div className="flex gap-3 pt-2">
               <button
                 type="submit"
-                disabled={saving || !title.trim()}
+                disabled={saving || !description.trim() || !amount || !category.trim() || splitAmongIds.length === 0}
                 className="flex-1 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50"
               >
                 {saving ? "Saving..." : "Save Changes"}
               </button>
               <button
                 type="button"
-                onClick={() => router.push("/tasks")}
+                onClick={() => router.push("/expenses")}
                 className="px-4 py-2 border border-border text-sm font-medium rounded-lg text-text hover:bg-bg-feature transition-colors"
               >
                 Cancel

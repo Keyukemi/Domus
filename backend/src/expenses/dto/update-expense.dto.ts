@@ -1,36 +1,39 @@
 import {
   IsString,
-  IsOptional,
+  IsNumber,
   IsDateString,
   IsArray,
   IsUUID,
-  IsEnum,
+  IsOptional,
   MinLength,
   MaxLength,
+  Min,
 } from 'class-validator';
-import { TaskStatus } from '../../generated/prisma/enums';
 
-export class UpdateTaskDto {
+export class UpdateExpenseDto {
   @IsOptional()
   @IsString()
   @MinLength(1)
   @MaxLength(200)
-  title?: string;
-
-  @IsOptional()
-  @IsString()
   description?: string;
 
   @IsOptional()
-  @IsDateString()
-  deadline?: string;
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0.01)
+  amount?: number;
 
   @IsOptional()
-  @IsEnum(TaskStatus)
-  status?: TaskStatus;
+  @IsString()
+  @MinLength(1)
+  @MaxLength(50)
+  category?: string;
+
+  @IsOptional()
+  @IsDateString()
+  date?: string;
 
   @IsOptional()
   @IsArray()
   @IsUUID('4', { each: true })
-  assigneeIds?: string[];
+  splitAmongIds?: string[];
 }

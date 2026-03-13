@@ -1,4 +1,9 @@
-import { Injectable, ForbiddenException, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  ForbiddenException,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateHouseholdDto } from './dto/create-household.dto';
 import { UpdateHouseholdDto } from './dto/update-household.dto';
@@ -126,11 +131,15 @@ export class HouseholdsService {
 
     // Prevent admin from removing themselves
     if (memberId === userId) {
-      throw new ForbiddenException('Admins cannot remove themselves. Transfer admin role first.');
+      throw new ForbiddenException(
+        'Admins cannot remove themselves. Transfer admin role first.',
+      );
     }
 
     // Verify the target member belongs to this household
-    const member = await this.prisma.user.findUnique({ where: { id: memberId } });
+    const member = await this.prisma.user.findUnique({
+      where: { id: memberId },
+    });
 
     if (!member || member.householdId !== householdId) {
       throw new NotFoundException('Member not found in this household');
@@ -157,7 +166,9 @@ export class HouseholdsService {
     }
 
     // Verify the target member belongs to this household
-    const member = await this.prisma.user.findUnique({ where: { id: memberId } });
+    const member = await this.prisma.user.findUnique({
+      where: { id: memberId },
+    });
 
     if (!member || member.householdId !== householdId) {
       throw new NotFoundException('Member not found in this household');
