@@ -105,7 +105,7 @@ function ExpensesList() {
       <AppNavbar />
       <div className="min-h-screen px-4 py-12">
         <div className="max-w-3xl mx-auto space-y-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <h1 className="text-2xl font-bold text-text font-serif">Expenses</h1>
             <div className="flex items-center gap-2">
               <Link
@@ -172,7 +172,7 @@ function ExpensesList() {
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
                         <p className="text-sm font-medium text-text">
                           {expense.description}
                         </p>

@@ -165,30 +165,32 @@ function HouseholdInfoCard({
     <div className="bg-bg-card border border-border-light rounded-2xl p-6">
       <p className="text-sm font-medium text-text-muted mb-2">Household Name</p>
       {editing ? (
-        <div className="flex gap-3">
+        <div className="space-y-3">
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             maxLength={100}
-            className="flex-1 px-4 py-2 rounded-lg border border-border text-sm text-text bg-bg outline-none focus:border-primary"
+            className="w-full px-4 py-2 rounded-lg border border-border text-sm text-text bg-bg outline-none focus:border-primary"
           />
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50"
-          >
-            {saving ? "Saving..." : "Save"}
-          </button>
-          <button
-            onClick={() => {
-              setName(household.name);
-              setEditing(false);
-            }}
-            className="px-4 py-2 border border-border text-sm font-medium rounded-lg text-text hover:bg-bg-feature transition-colors"
-          >
-            Cancel
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex-1 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50"
+            >
+              {saving ? "Saving..." : "Save"}
+            </button>
+            <button
+              onClick={() => {
+                setName(household.name);
+                setEditing(false);
+              }}
+              className="flex-1 px-4 py-2 border border-border text-sm font-medium rounded-lg text-text hover:bg-bg-feature transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       ) : (
         <div className="flex items-center justify-between">

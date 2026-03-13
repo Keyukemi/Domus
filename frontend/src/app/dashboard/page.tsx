@@ -234,7 +234,7 @@ function DashboardContent() {
                       </p>
                     )}
                   </div>
-                  <span className="flex items-center gap-1 text-xs text-text-muted flex-shrink-0">
+                  <span className="flex items-center gap-1 text-xs text-text-muted shrink-0">
                     <FiClock size={12} />
                     {new Date(task.deadline).toLocaleDateString()}
                   </span>
@@ -269,7 +269,7 @@ function DashboardContent() {
                       Paid by: {expense.paidBy.name} · {new Date(expense.date).toLocaleDateString()}
                     </p>
                   </div>
-                  <span className="text-sm font-semibold text-text flex-shrink-0">
+                  <span className="text-sm font-semibold text-text shrink-0">
                     ${parseFloat(expense.amount).toFixed(2)}
                   </span>
                 </div>
