@@ -50,7 +50,7 @@ export default function Home() {
               <div className="w-9 h-9 rounded-lg bg-accent-light/50 flex items-center justify-center mb-4 text-primary">
                 <FiDollarSign size={18} />
               </div>
-              <p className="text-3xl font-bold text-text">€234</p>
+              <p className="text-3xl font-bold text-text">$234</p>
               <p className="text-sm text-text-muted mt-1">Shared Expenses</p>
             </div>
             <div className="bg-bg-card-warm rounded-xl p-6">

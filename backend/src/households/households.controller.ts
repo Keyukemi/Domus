@@ -31,8 +31,8 @@ export class HouseholdsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.householdsService.findOne(id);
+  findOne(@Param('id') id: string, @Request() req) {
+    return this.householdsService.findOne(id, req.user.id);
   }
 
   @Patch(':id')
@@ -42,6 +42,11 @@ export class HouseholdsController {
     @Request() req,
   ) {
     return this.householdsService.update(id, dto, req.user.id);
+  }
+
+  @Patch(':id/regenerate-invite')
+  regenerateInviteCode(@Param('id') id: string, @Request() req) {
+    return this.householdsService.regenerateInviteCode(id, req.user.id);
   }
 
   @Delete(':id/members/:memberId')

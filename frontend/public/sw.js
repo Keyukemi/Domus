@@ -1,4 +1,4 @@
-const CACHE_NAME = "domus-v1";
+const CACHE_NAME = "domus-v1.1";
 
 const PRECACHE_URLS = [
   "/",

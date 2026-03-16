@@ -20,7 +20,9 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
   if (res.status === 401 && !path.startsWith("/api/auth")) {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("user");
-    window.location.href = "/auth";
+    // Use replaceState + dispatchEvent to trigger React re-render without full reload
+    window.history.replaceState(null, "", "/auth");
+    window.dispatchEvent(new Event("storage"));
     throw new Error("Unauthorized");
   }
 
