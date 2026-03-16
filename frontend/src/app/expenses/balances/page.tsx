@@ -127,12 +127,13 @@ function BalancesSummary() {
             </div>
           ) : (
             <div className="space-y-3">
-              {balances.map((balance, index) => {
+              {balances.map((balance) => {
                 const isInvolved = user?.id === balance.from.id || user?.id === balance.to.id;
+                const balanceKey = `${balance.from.id}-${balance.to.id}`;
 
                 return (
                   <div
-                    key={index}
+                    key={balanceKey}
                     className="bg-bg-card border border-border-light rounded-2xl p-5"
                   >
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-3">

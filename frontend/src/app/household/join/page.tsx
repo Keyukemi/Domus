@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/api";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -112,9 +113,9 @@ function JoinHouseholdForm() {
 
           <p className="text-sm text-text-muted text-center mt-6">
             Want to start your own?{" "}
-            <a href="/household/create" className="text-primary hover:underline">
+            <Link href="/household/create" className="text-primary hover:underline">
               Create a household
-            </a>
+            </Link>
           </p>
         </div>
       </div>

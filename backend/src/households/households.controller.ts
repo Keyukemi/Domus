@@ -44,6 +44,11 @@ export class HouseholdsController {
     return this.householdsService.update(id, dto, req.user.id);
   }
 
+  @Patch(':id/regenerate-invite')
+  regenerateInviteCode(@Param('id') id: string, @Request() req) {
+    return this.householdsService.regenerateInviteCode(id, req.user.id);
+  }
+
   @Delete(':id/members/:memberId')
   removeMember(
     @Param('id') id: string,

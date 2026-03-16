@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/api";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import { FiCopy, FiCheck, FiUserMinus, FiArrowRight } from "react-icons/fi";
+import { FiCopy, FiCheck, FiUserMinus, FiArrowRight, FiRefreshCw } from "react-icons/fi";
 import AppNavbar from "@/components/AppNavbar";
 import ConfirmModal from "@/components/ConfirmModal";
 
@@ -63,9 +63,12 @@ function HouseholdSettings() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-text-muted">Loading...</p>
-      </div>
+      <>
+        <AppNavbar />
+        <div className="min-h-screen flex items-center justify-center">
+          <p className="text-text-muted">Loading...</p>
+        </div>
+      </>
     );
   }
 
@@ -102,7 +105,13 @@ function HouseholdSettings() {
           setError={setError}
         />
 
-        {isAdmin && <InviteCodeCard inviteCode={household.inviteCode} />}
+        {isAdmin && (
+          <InviteCodeCard
+            inviteCode={household.inviteCode}
+            householdId={household.id}
+            onRegenerate={fetchHousehold}
+          />
+        )}
 
         <MembersCard
           household={household}
@@ -211,8 +220,17 @@ function HouseholdInfoCard({
 
 /* ── Invite Code Card ── */
 
-function InviteCodeCard({ inviteCode }: { inviteCode: string }) {
+function InviteCodeCard({
+  inviteCode,
+  householdId,
+  onRegenerate,
+}: {
+  inviteCode: string;
+  householdId: string;
+  onRegenerate: () => Promise<void>;
+}) {
   const [copied, setCopied] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
 
   function handleCopy() {
     navigator.clipboard.writeText(inviteCode);
@@ -220,18 +238,42 @@ function InviteCodeCard({ inviteCode }: { inviteCode: string }) {
     setTimeout(() => setCopied(false), 2000);
   }
 
+  async function handleRegenerate() {
+    setRegenerating(true);
+    try {
+      const res = await apiFetch(`/api/households/${householdId}/regenerate-invite`, {
+        method: "PATCH",
+      });
+      if (res.ok) {
+        await onRegenerate();
+      }
+    } finally {
+      setRegenerating(false);
+    }
+  }
+
   return (
     <div className="bg-bg-card border border-border-light rounded-2xl p-6">
       <p className="text-sm font-medium text-text-muted mb-2">Invite Code</p>
       <div className="flex items-center justify-between">
         <p className="text-lg font-mono font-bold tracking-widest text-text">{inviteCode}</p>
-        <button
-          onClick={handleCopy}
-          className="flex items-center gap-1.5 text-sm text-primary hover:underline"
-        >
-          {copied ? <FiCheck size={16} /> : <FiCopy size={16} />}
-          {copied ? "Copied!" : "Copy"}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleRegenerate}
+            disabled={regenerating}
+            className="flex items-center gap-1.5 text-sm text-text-muted hover:text-primary transition-colors disabled:opacity-50"
+          >
+            <FiRefreshCw size={16} className={regenerating ? "animate-spin" : ""} />
+            {regenerating ? "Regenerating..." : "Regenerate"}
+          </button>
+          <button
+            onClick={handleCopy}
+            className="flex items-center gap-1.5 text-sm text-primary hover:underline"
+          >
+            {copied ? <FiCheck size={16} /> : <FiCopy size={16} />}
+            {copied ? "Copied!" : "Copy"}
+          </button>
+        </div>
       </div>
       <p className="text-xs text-text-muted mt-2">
         Share this code with others so they can join your household.

@@ -121,6 +121,25 @@ export class HouseholdsService {
     return this.findOne(id);
   }
 
+  async regenerateInviteCode(householdId: string, userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+
+    if (!user || user.householdId !== householdId) {
+      throw new ForbiddenException('You do not belong to this household');
+    }
+
+    if (user.role !== 'ADMIN') {
+      throw new ForbiddenException('Only admins can regenerate the invite code');
+    }
+
+    await this.prisma.household.update({
+      where: { id: householdId },
+      data: { inviteCode: this.generateInviteCode() },
+    });
+
+    return this.findOne(householdId);
+  }
+
   async removeMember(householdId: string, memberId: string, userId: string) {
     // Verify the requesting user is an admin of this household
     const admin = await this.prisma.user.findUnique({ where: { id: userId } });
