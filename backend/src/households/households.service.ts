@@ -50,7 +50,7 @@ export class HouseholdsService {
     return this.findOne(household.id);
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, userId?: string) {
     const household = await this.prisma.household.findUnique({
       where: { id },
       include: {
@@ -67,6 +67,10 @@ export class HouseholdsService {
 
     if (!household) {
       throw new NotFoundException('Household not found');
+    }
+
+    if (userId && !household.members.some((m) => m.id === userId)) {
+      throw new ForbiddenException('You do not belong to this household');
     }
 
     return household;

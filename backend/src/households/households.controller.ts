@@ -31,8 +31,8 @@ export class HouseholdsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.householdsService.findOne(id);
+  findOne(@Param('id') id: string, @Request() req) {
+    return this.householdsService.findOne(id, req.user.id);
   }
 
   @Patch(':id')
