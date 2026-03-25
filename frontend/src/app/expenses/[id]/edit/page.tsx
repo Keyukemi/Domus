@@ -10,6 +10,7 @@ import {
 } from "@/lib/expense-categories";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppNavbar from "@/components/AppNavbar";
+import ExpenseCategoryPicker from "@/components/ExpenseCategoryPicker";
 
 interface Member {
   id: string;
@@ -193,19 +194,12 @@ function EditExpense() {
               <label htmlFor="category" className="block text-sm font-medium text-text-muted mb-1.5">
                 Category *
               </label>
-              <select
+              <ExpenseCategoryPicker
                 id="category"
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                required
-                className="w-full px-4 py-2 rounded-lg border border-border text-sm text-text bg-bg outline-none focus:border-primary"
-              >
-                {EXPENSE_CATEGORIES.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
+                onChange={setCategory}
+                options={EXPENSE_CATEGORIES}
+              />
             </div>
 
             {category === "Other" && (
