@@ -108,7 +108,7 @@ describe('TasksService (TC-02)', () => {
   });
 
   describe('findAll', () => {
-    it('should return only tasks from the user\'s household', async () => {
+    it("should return only tasks from the user's household", async () => {
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
       mockPrisma.task.findMany.mockResolvedValue([mockTask]);
 

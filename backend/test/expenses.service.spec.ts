@@ -36,14 +36,6 @@ const userAlice = {
   householdId: 'household-1',
 };
 
-const userBob = {
-  id: 'bob-id',
-  name: 'Bob',
-  email: 'bob@domus.com',
-  role: 'MEMBER',
-  householdId: 'household-1',
-};
-
 describe('ExpensesService (TC-03)', () => {
   let service: ExpensesService;
 

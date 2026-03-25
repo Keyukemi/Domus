@@ -21,11 +21,6 @@ export default function AppNavbar() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // Close menu on route change
-  useEffect(() => {
-    setMenuOpen(false);
-  }, [pathname]);
-
   // Close menu on Escape key
   useEffect(() => {
     if (!menuOpen) return;
@@ -89,7 +84,7 @@ export default function AppNavbar() {
 
         {/* Mobile hamburger button */}
         <button
-          onClick={() => setMenuOpen(!menuOpen)}
+          onClick={() => setMenuOpen((current) => !current)}
           className="sm:hidden p-2 text-text-muted hover:text-text transition-colors"
           aria-label="Toggle menu"
         >
@@ -105,6 +100,7 @@ export default function AppNavbar() {
               <Link
                 key={link.href}
                 href={link.href}
+                onClick={closeMenu}
                 className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm transition-colors ${
                   pathname === link.href
                     ? "text-primary bg-primary/5 font-medium"
@@ -117,7 +113,10 @@ export default function AppNavbar() {
             ))}
 
             <button
-              onClick={logout}
+              onClick={() => {
+                closeMenu();
+                logout();
+              }}
               className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm text-text-muted hover:text-red-500 hover:bg-red-50 transition-colors w-full"
             >
               <FiLogOut size={18} />

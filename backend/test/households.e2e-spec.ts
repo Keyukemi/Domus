@@ -147,9 +147,7 @@ describe('Households (e2e)', () => {
       expect(response.status).toBe(201);
       expect(response.body.members).toHaveLength(2);
 
-      const memberEntry = response.body.members.find(
-        (m) => m.id === memberId,
-      );
+      const memberEntry = response.body.members.find((m) => m.id === memberId);
       expect(memberEntry.role).toBe('MEMBER');
     });
 
