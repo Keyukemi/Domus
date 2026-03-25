@@ -5,8 +5,9 @@ import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/api";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppNavbar from "@/components/AppNavbar";
+import TaskCard from "@/components/TaskCard";
 import Link from "next/link";
-import { FiPlus, FiCheckCircle, FiCircle, FiEdit2, FiTrash2, FiClock } from "react-icons/fi";
+import { FiPlus, FiCheckCircle, FiEdit2, FiTrash2 } from "react-icons/fi";
 import ConfirmModal from "@/components/ConfirmModal";
 
 interface Assignee {
@@ -159,91 +160,53 @@ function TasksList() {
           ) : (
             <div className="space-y-3">
               {tasks.map((task) => (
-                <div
+                <TaskCard
                   key={task.id}
-                  className="bg-bg-card border border-border-light rounded-2xl p-5"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-3 flex-1 min-w-0">
-                      <button
-                        onClick={() => handleToggleStatus(task)}
-                        className={`mt-0.5 flex-shrink-0 transition-colors ${
-                          task.status === "COMPLETED"
-                            ? "text-green-500 hover:text-green-600"
-                            : "text-text-muted hover:text-primary"
-                        }`}
-                        title={task.status === "COMPLETED" ? "Mark as pending" : "Mark as complete"}
-                      >
-                        {task.status === "COMPLETED" ? (
-                          <FiCheckCircle size={20} />
-                        ) : (
-                          <FiCircle size={20} />
-                        )}
-                      </button>
-
-                      <div className="flex-1 min-w-0">
-                        <p
-                          className={`text-sm font-medium ${
-                            task.status === "COMPLETED"
-                              ? "text-text-muted line-through"
-                              : "text-text"
-                          }`}
-                        >
-                          {task.title}
-                        </p>
-
-                        {task.description && (
-                          <p className="text-xs text-text-muted mt-1 line-clamp-2">
-                            {task.description}
-                          </p>
-                        )}
-
-                        <div className="flex flex-wrap items-center gap-3 mt-2">
-                          {task.deadline && (
-                            <span className="flex items-center gap-1 text-xs text-text-muted">
-                              <FiClock size={12} />
-                              {new Date(task.deadline).toLocaleDateString()}
-                            </span>
-                          )}
-
-                          {/* Assignee Badges (S3-8) */}
-                          {task.assignees.length > 0 && (
-                            <div className="flex items-center gap-1">
-                              {task.assignees.map(({ user: assignee }) => (
-                                <span
-                                  key={assignee.id}
-                                  title={assignee.name}
-                                  className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-medium"
-                                >
-                                  {assignee.name.charAt(0).toUpperCase()}
-                                </span>
-                              ))}
-                            </div>
-                          )}
+                  title={task.title}
+                  description={task.description}
+                  deadline={task.deadline}
+                  status={task.status}
+                  assigneeNames={task.assignees.map(({ user: assignee }) => assignee.name)}
+                  leadingAction={
+                    <button
+                      onClick={() => handleToggleStatus(task)}
+                      className={`transition-colors ${
+                        task.status === "COMPLETED"
+                          ? "text-green-500 hover:text-green-600"
+                          : "text-text-muted hover:text-green-600"
+                      }`}
+                      title={
+                        task.status === "COMPLETED"
+                          ? "Mark as pending"
+                          : "Mark as complete"
+                      }
+                    >
+                      <FiCheckCircle size={20} />
+                    </button>
+                  }
+                  actions={
+                    <div className="flex items-start gap-3">
+                      {user?.id === task.createdBy.id && (
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Link
+                            href={`/tasks/${task.id}/edit`}
+                            className="p-1.5 text-text-muted hover:text-primary transition-colors"
+                            title="Edit task"
+                          >
+                            <FiEdit2 size={16} />
+                          </Link>
+                          <button
+                            onClick={() => setDeleteId(task.id)}
+                            className="p-1.5 text-text-muted hover:text-red-500 transition-colors"
+                            title="Delete task"
+                          >
+                            <FiTrash2 size={16} />
+                          </button>
                         </div>
-                      </div>
+                      )}
                     </div>
-
-                    {user?.id === task.createdBy.id && (
-                      <div className="flex items-center gap-1 flex-shrink-0">
-                        <Link
-                          href={`/tasks/${task.id}/edit`}
-                          className="p-1.5 text-text-muted hover:text-primary transition-colors"
-                          title="Edit task"
-                        >
-                          <FiEdit2 size={16} />
-                        </Link>
-                        <button
-                          onClick={() => setDeleteId(task.id)}
-                          className="p-1.5 text-text-muted hover:text-red-500 transition-colors"
-                          title="Delete task"
-                        >
-                          <FiTrash2 size={16} />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                  }
+                />
               ))}
             </div>
           )}
