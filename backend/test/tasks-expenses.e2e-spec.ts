@@ -250,6 +250,31 @@ describe('Tasks & Expenses (e2e)', () => {
       expect(response.body[0].to.id).toBe(aliceId);
       expect(response.body[0].amount).toBe('50.00');
     });
+
+    it('should not change balances when a planned expense is created', async () => {
+      const plannedExpense = await request(app.getHttpServer())
+        .post('/api/expenses')
+        .set('Authorization', `Bearer ${aliceToken}`)
+        .send({
+          description: 'Weekend barbecue',
+          amount: 60,
+          category: 'Food',
+          date: '2025-06-05',
+          status: 'PLANNED',
+          splitAmongIds: [aliceId, bobId],
+        });
+
+      expect(plannedExpense.status).toBe(201);
+      expect(plannedExpense.body.status).toBe('PLANNED');
+
+      const balanceResponse = await request(app.getHttpServer())
+        .get('/api/expenses/balances')
+        .set('Authorization', `Bearer ${aliceToken}`);
+
+      expect(balanceResponse.status).toBe(200);
+      expect(balanceResponse.body).toHaveLength(1);
+      expect(balanceResponse.body[0].amount).toBe('50.00');
+    });
   });
 
   describe('POST /api/expenses/settlements – Settle up', () => {

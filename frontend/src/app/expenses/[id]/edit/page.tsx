@@ -4,14 +4,21 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/api";
+import {
+  EXPENSE_CATEGORIES,
+  isPresetExpenseCategory,
+} from "@/lib/expense-categories";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppNavbar from "@/components/AppNavbar";
+import ExpenseCategoryPicker from "@/components/ExpenseCategoryPicker";
 
 interface Member {
   id: string;
   name: string;
   email: string;
 }
+
+type ExpenseStatus = "PAID" | "PLANNED";
 
 export default function EditExpensePage() {
   return (
@@ -29,13 +36,18 @@ function EditExpense() {
 
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState<string>(EXPENSE_CATEGORIES[0]);
+  const [customCategory, setCustomCategory] = useState("");
   const [date, setDate] = useState("");
+  const [status, setStatus] = useState<ExpenseStatus>("PAID");
   const [splitAmongIds, setSplitAmongIds] = useState<string[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  const resolvedCategory =
+    category === "Other" ? customCategory.trim() : category;
 
   const fetchData = useCallback(async () => {
     if (!user?.householdId) return;
@@ -56,8 +68,15 @@ function EditExpense() {
         }
         setDescription(expenseData.description);
         setAmount(Number(expenseData.amount).toString());
-        setCategory(expenseData.category);
+        if (isPresetExpenseCategory(expenseData.category)) {
+          setCategory(expenseData.category);
+          setCustomCategory("");
+        } else {
+          setCategory("Other");
+          setCustomCategory(expenseData.category);
+        }
         setDate(expenseData.date.split("T")[0]);
+        setStatus(expenseData.status);
         setSplitAmongIds(expenseData.splits.map((s: { user: Member }) => s.user.id));
       } else {
         setError(expenseData.message || "Failed to load expense.");
@@ -71,7 +90,7 @@ function EditExpense() {
     } finally {
       setLoading(false);
     }
-  }, [expenseId, user?.householdId]);
+  }, [expenseId, router, user?.householdId, user?.id]);
 
   useEffect(() => {
     fetchData();
@@ -88,8 +107,9 @@ function EditExpense() {
         body: JSON.stringify({
           description: description.trim(),
           amount: parseFloat(amount),
-          category: category.trim(),
+          category: resolvedCategory,
           date,
+          status,
           splitAmongIds,
         }),
       });
@@ -179,15 +199,59 @@ function EditExpense() {
               <label htmlFor="category" className="block text-sm font-medium text-text-muted mb-1.5">
                 Category *
               </label>
-              <input
+              <ExpenseCategoryPicker
                 id="category"
-                type="text"
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                required
-                maxLength={50}
-                className="w-full px-4 py-2 rounded-lg border border-border text-sm text-text bg-bg outline-none focus:border-primary"
+                onChange={setCategory}
+                options={EXPENSE_CATEGORIES}
               />
+            </div>
+
+            {category === "Other" && (
+              <div>
+                <label htmlFor="customCategory" className="block text-sm font-medium text-text-muted mb-1.5">
+                  Custom category *
+                </label>
+                <input
+                  id="customCategory"
+                  type="text"
+                  value={customCategory}
+                  onChange={(e) => setCustomCategory(e.target.value)}
+                  required
+                  maxLength={50}
+                  className="w-full px-4 py-2 rounded-lg border border-border text-sm text-text bg-bg outline-none focus:border-primary"
+                />
+              </div>
+            )}
+
+            <div className="rounded-xl border border-border-light bg-bg-feature px-4 py-3 space-y-3">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={status === "PAID"}
+                  onChange={(e) =>
+                    setStatus(e.target.checked ? "PAID" : "PLANNED")
+                  }
+                  className="mt-0.5 accent-primary"
+                />
+                <div>
+                  <p className="text-sm font-medium text-text">
+                    I&apos;ve already paid this expense
+                  </p>
+                  <p className="text-xs text-text-muted mt-1">
+                    Uncheck this to keep it as a planned expense until payment is made.
+                  </p>
+                </div>
+              </label>
+
+              <div>
+                <p className="text-sm font-medium text-text">Payment note</p>
+                <p className="text-xs text-text-muted mt-1">
+                  {status === "PAID"
+                    ? "This expense is marked as paid, so it contributes to household balances."
+                    : "This expense is marked as planned, so it stays visible without changing balances yet."}
+                </p>
+              </div>
             </div>
 
             <div>
@@ -234,13 +298,29 @@ function EditExpense() {
                     ${splitPreview} per person ({splitAmongIds.length} {splitAmongIds.length === 1 ? "person" : "people"})
                   </p>
                 )}
+
+                {splitAmongIds.length > 0 && (
+                  <p className="text-xs text-text-muted mt-1">
+                    {status === "PAID"
+                      ? splitAmongIds.includes(user?.id || "")
+                        ? "Your share is included in this split."
+                        : "Your share is not included in this split."
+                      : "These are the household members who will share this expense once it is paid."}
+                  </p>
+                )}
               </div>
             )}
 
             <div className="flex gap-3 pt-2">
               <button
                 type="submit"
-                disabled={saving || !description.trim() || !amount || !category.trim() || splitAmongIds.length === 0}
+                disabled={
+                  saving ||
+                  !description.trim() ||
+                  !amount ||
+                  !resolvedCategory ||
+                  splitAmongIds.length === 0
+                }
                 className="flex-1 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50"
               >
                 {saving ? "Saving..." : "Save Changes"}

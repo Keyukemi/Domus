@@ -133,7 +133,9 @@ export class HouseholdsService {
     }
 
     if (user.role !== 'ADMIN') {
-      throw new ForbiddenException('Only admins can regenerate the invite code');
+      throw new ForbiddenException(
+        'Only admins can regenerate the invite code',
+      );
     }
 
     await this.prisma.household.update({

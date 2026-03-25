@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/api";
+import { formatDateForDatetimeLocal, toIsoDateTime } from "@/lib/datetime";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppNavbar from "@/components/AppNavbar";
 
@@ -55,7 +56,9 @@ function EditTask() {
         }
         setTitle(taskData.title);
         setDescription(taskData.description || "");
-        setDeadline(taskData.deadline ? taskData.deadline.split("T")[0] : "");
+        setDeadline(
+          taskData.deadline ? formatDateForDatetimeLocal(taskData.deadline) : ""
+        );
         setAssigneeIds(taskData.assignees.map((a: { user: Member }) => a.user.id));
       } else {
         setError(taskData.message || "Failed to load task.");
@@ -69,7 +72,7 @@ function EditTask() {
     } finally {
       setLoading(false);
     }
-  }, [taskId, user?.householdId]);
+  }, [taskId, router, user?.householdId, user?.id]);
 
   useEffect(() => {
     fetchData();
@@ -86,7 +89,7 @@ function EditTask() {
         body: JSON.stringify({
           title: title.trim(),
           description: description.trim() || undefined,
-          deadline: deadline || undefined,
+          deadline: toIsoDateTime(deadline),
           assigneeIds,
         }),
       });
@@ -171,7 +174,7 @@ function EditTask() {
               </label>
               <input
                 id="deadline"
-                type="date"
+                type="datetime-local"
                 value={deadline}
                 onChange={(e) => setDeadline(e.target.value)}
                 className="w-full px-4 py-2 rounded-lg border border-border text-sm text-text bg-bg outline-none focus:border-primary"

@@ -43,7 +43,7 @@ export class DashboardService {
         where: {
           householdId,
           status: TaskStatus.PENDING,
-          deadline: { gte: now, lte: sevenDaysFromNow },
+          deadline: { not: null, lte: sevenDaysFromNow },
         },
         include: {
           assignees: {

@@ -1,5 +1,6 @@
 import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { AuthProvider } from "@/context/AuthContext";
 
 // TC-05 – Dashboard Data Aggregation (frontend)
@@ -90,7 +91,7 @@ describe("Dashboard Page (TC-05)", () => {
     });
     expect(screen.getByText("$0.00")).toBeTruthy();
     expect(screen.getByText("All settled")).toBeTruthy();
-    expect(screen.getByText("No upcoming deadlines")).toBeTruthy();
+    expect(screen.getByText("No upcoming or overdue tasks")).toBeTruthy();
     expect(screen.getByText("No expenses yet")).toBeTruthy();
     expect(screen.getByText("No notes yet")).toBeTruthy();
   });
@@ -125,5 +126,106 @@ describe("Dashboard Page (TC-05)", () => {
     await waitFor(() => {
       expect(screen.getByText("Server error")).toBeTruthy();
     });
+  });
+
+  it("should let the user complete an upcoming task from the dashboard", async () => {
+    let dashboardCalls = 0;
+
+    mockApiFetch.mockImplementation(async (path: string, options?: RequestInit) => {
+      if (path === "/api/dashboard") {
+        dashboardCalls += 1;
+
+        if (dashboardCalls === 1) {
+          return {
+            ok: true,
+            json: async () => ({
+              pendingTasksCount: 1,
+              upcomingDeadlines: [
+                {
+                  id: "task-1",
+                  title: "Take out recycling",
+                  deadline: "2026-03-26T10:00:00.000Z",
+                  assignees: [],
+                },
+              ],
+              myBalance: "0.00",
+              recentExpenses: [],
+              recentNotes: [],
+            }),
+          } as Response;
+        }
+
+        return {
+          ok: true,
+          json: async () => ({
+            pendingTasksCount: 0,
+            upcomingDeadlines: [],
+            myBalance: "0.00",
+            recentExpenses: [],
+            recentNotes: [],
+          }),
+        } as Response;
+      }
+
+      if (path === "/api/tasks/task-1" && options?.method === "PATCH") {
+        return { ok: true, json: async () => ({}) } as Response;
+      }
+
+      if (path.startsWith("/api/households/")) {
+        return {
+          ok: true,
+          json: async () => ({ name: "Test Household" }),
+        } as Response;
+      }
+
+      return { ok: false, json: async () => ({}) } as Response;
+    });
+
+    renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByText("Take out recycling")).toBeTruthy();
+    });
+
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: "Mark Take out recycling as complete",
+      })
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("0")).toBeTruthy();
+    });
+
+    expect(screen.getByText("No upcoming or overdue tasks")).toBeTruthy();
+    expect(mockApiFetch).toHaveBeenCalledWith("/api/tasks/task-1", {
+      method: "PATCH",
+      body: JSON.stringify({ status: "COMPLETED" }),
+    });
+  });
+
+  it("should label overdue tasks clearly on the dashboard", async () => {
+    mockDashboardApi({
+      pendingTasksCount: 2,
+      upcomingDeadlines: [
+        {
+          id: "task-overdue",
+          title: "Pay electricity bill",
+          deadline: "2020-01-01T10:00:00.000Z",
+          assignees: [],
+        },
+      ],
+      myBalance: "0.00",
+      recentExpenses: [],
+      recentNotes: [],
+    });
+
+    renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByText("Pay electricity bill")).toBeTruthy();
+    });
+
+    expect(screen.getByText("Overdue")).toBeTruthy();
   });
 });

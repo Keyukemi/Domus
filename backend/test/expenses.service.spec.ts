@@ -36,14 +36,6 @@ const userAlice = {
   householdId: 'household-1',
 };
 
-const userBob = {
-  id: 'bob-id',
-  name: 'Bob',
-  email: 'bob@domus.com',
-  role: 'MEMBER',
-  householdId: 'household-1',
-};
-
 describe('ExpensesService (TC-03)', () => {
   let service: ExpensesService;
 
@@ -69,6 +61,7 @@ describe('ExpensesService (TC-03)', () => {
         amount: 100,
         category: 'Food',
         date: new Date('2025-06-01'),
+        status: 'PAID',
         paidById: 'alice-id',
         householdId: 'household-1',
         paidBy: { id: 'alice-id', name: 'Alice', email: 'alice@domus.com' },
@@ -102,6 +95,7 @@ describe('ExpensesService (TC-03)', () => {
       expect(mockPrisma.expense.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
+            status: 'PAID',
             splits: {
               create: [
                 { userId: 'alice-id', amount: '50.00' },
@@ -129,6 +123,43 @@ describe('ExpensesService (TC-03)', () => {
           'alice-id',
         ),
       ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should create a planned expense without marking it as paid', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(userAlice);
+      mockPrisma.user.count.mockResolvedValue(2);
+      mockPrisma.expense.create.mockResolvedValue({
+        id: 'expense-2',
+        description: 'Weekend barbecue',
+        amount: 60,
+        category: 'Food',
+        date: new Date('2025-06-05'),
+        status: 'PLANNED',
+        paidById: 'alice-id',
+        householdId: 'household-1',
+        paidBy: { id: 'alice-id', name: 'Alice', email: 'alice@domus.com' },
+        splits: [],
+      });
+
+      await service.create(
+        {
+          description: 'Weekend barbecue',
+          amount: 60,
+          category: 'Food',
+          date: '2025-06-05',
+          status: 'PLANNED' as any,
+          splitAmongIds: ['alice-id', 'bob-id'],
+        },
+        'alice-id',
+      );
+
+      expect(mockPrisma.expense.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            status: 'PLANNED',
+          }),
+        }),
+      );
     });
   });
 
@@ -266,6 +297,47 @@ describe('ExpensesService (TC-03)', () => {
         to: { id: 'alice-id' },
         amount: '20.00',
       });
+    });
+
+    it('should only load paid expenses when calculating balances', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(userAlice);
+      mockPrisma.expense.findMany.mockResolvedValue([
+        {
+          id: 'expense-1',
+          amount: 100,
+          paidById: 'alice-id',
+          paidBy: { id: 'alice-id', name: 'Alice', email: 'alice@domus.com' },
+          splits: [
+            {
+              userId: 'alice-id',
+              amount: '50.00',
+              user: {
+                id: 'alice-id',
+                name: 'Alice',
+                email: 'alice@domus.com',
+              },
+            },
+            {
+              userId: 'bob-id',
+              amount: '50.00',
+              user: { id: 'bob-id', name: 'Bob', email: 'bob@domus.com' },
+            },
+          ],
+        },
+      ]);
+      mockPrisma.settlement.findMany.mockResolvedValue([]);
+
+      const result = await service.getBalances('alice-id');
+
+      expect(mockPrisma.expense.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            status: 'PAID',
+          }),
+        }),
+      );
+      expect(result).toHaveLength(1);
+      expect(result[0].amount).toBe('50.00');
     });
   });
 

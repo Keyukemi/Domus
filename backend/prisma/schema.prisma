@@ -18,6 +18,11 @@ enum TaskStatus {
   COMPLETED
 }
 
+enum ExpenseStatus {
+  PAID
+  PLANNED
+}
+
 model Household {
   id         String   @id @default(uuid())
   name       String   @db.VarChar(100)
@@ -86,15 +91,16 @@ model TaskAssignee {
 }
 
 model Expense {
-  id          String   @id @default(uuid())
-  description String   @db.VarChar(200)
-  amount      Decimal  @db.Decimal(10, 2)
-  category    String   @db.VarChar(50)
-  date        DateTime @db.Date
+  id          String        @id @default(uuid())
+  description String        @db.VarChar(200)
+  amount      Decimal       @db.Decimal(10, 2)
+  category    String        @db.VarChar(50)
+  date        DateTime      @db.Date
+  status      ExpenseStatus @default(PAID)
   paidById    String
   householdId String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
   paidBy    User           @relation("ExpensePayer", fields: [paidById], references: [id])
   household Household      @relation(fields: [householdId], references: [id])

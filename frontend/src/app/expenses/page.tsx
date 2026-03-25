@@ -20,6 +20,7 @@ interface Expense {
   amount: string;
   category: string;
   date: string;
+  status: "PAID" | "PLANNED";
   paidBy: { id: string; name: string; email: string };
   splits: Split[];
   createdAt: string;
@@ -179,6 +180,15 @@ function ExpensesList() {
                         <span className="text-sm font-semibold text-primary">
                           ${Number(expense.amount).toFixed(2)}
                         </span>
+                        <span
+                          className={`inline-flex w-fit items-center self-start rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase leading-none tracking-[0.04em] ${
+                            expense.status === "PAID"
+                              ? "border border-emerald-200 bg-emerald-50 text-emerald-800"
+                              : "border border-amber-200 bg-amber-50 text-amber-800"
+                          }`}
+                        >
+                          {expense.status === "PAID" ? "Paid" : "Planned"}
+                        </span>
                       </div>
 
                       <div className="flex flex-wrap items-center gap-3 mt-2">
@@ -190,7 +200,8 @@ function ExpensesList() {
                           {new Date(expense.date).toLocaleDateString()}
                         </span>
                         <span className="text-xs text-text-muted">
-                          Paid by <span className="font-medium text-text">{expense.paidBy.name}</span>
+                          {expense.status === "PAID" ? "Paid by" : "Planned by"}{" "}
+                          <span className="font-medium text-text">{expense.paidBy.name}</span>
                         </span>
                       </div>
 

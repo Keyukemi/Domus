@@ -6,8 +6,9 @@ import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/api";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppNavbar from "@/components/AppNavbar";
+import TaskCard from "@/components/TaskCard";
 import Link from "next/link";
-import { FiCheckSquare, FiDollarSign, FiClock } from "react-icons/fi";
+import { FiCheckCircle, FiCheckSquare, FiDollarSign } from "react-icons/fi";
 
 interface Assignee {
   user: { id: string; name: string; email: string };
@@ -93,6 +94,8 @@ function DashboardContent() {
   const [householdName, setHouseholdName] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [completingTaskId, setCompletingTaskId] = useState<string | null>(null);
+  const [taskActionError, setTaskActionError] = useState("");
 
   const fetchDashboard = useCallback(async () => {
     try {
@@ -105,6 +108,7 @@ function DashboardContent() {
 
       const dashData = await dashRes.json();
       if (dashRes.ok) {
+        setError("");
         setData(dashData);
       } else {
         setError(dashData.message || "Failed to load dashboard.");
@@ -113,6 +117,9 @@ function DashboardContent() {
       if (householdRes && householdRes.ok) {
         const household = await householdRes.json();
         setHouseholdName(household.name);
+      } else if (householdRes) {
+        const householdData = await householdRes.json();
+        setError(householdData.message || "Failed to load dashboard.");
       }
     } catch {
       setError("Could not connect to the server.");
@@ -124,6 +131,30 @@ function DashboardContent() {
   useEffect(() => {
     fetchDashboard();
   }, [fetchDashboard]);
+
+  async function handleCompleteTask(taskId: string) {
+    setCompletingTaskId(taskId);
+    setTaskActionError("");
+
+    try {
+      const res = await apiFetch(`/api/tasks/${taskId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: "COMPLETED" }),
+      });
+
+      if (!res.ok) {
+        const response = await res.json();
+        setTaskActionError(response.message || "Failed to complete task.");
+        return;
+      }
+
+      await fetchDashboard();
+    } catch {
+      setTaskActionError("Could not update the task.");
+    } finally {
+      setCompletingTaskId(null);
+    }
+  }
 
   if (loading) {
     return (
@@ -211,33 +242,45 @@ function DashboardContent() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wide">
-              📋 Upcoming Tasks
+              📋 Upcoming & Overdue Tasks
             </h2>
             <Link href="/tasks" className="text-xs text-primary hover:text-primary-dark transition-colors">
               View all
             </Link>
           </div>
 
+          {taskActionError && (
+            <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {taskActionError}
+            </div>
+          )}
+
           {data.upcomingDeadlines.length === 0 ? (
             <div className="bg-bg-card border border-border-light rounded-2xl p-5 text-center">
-              <p className="text-sm text-text-muted">No upcoming deadlines</p>
+              <p className="text-sm text-text-muted">No upcoming or overdue tasks</p>
             </div>
           ) : (
             <div className="bg-bg-card border border-border-light rounded-2xl divide-y divide-border-light">
               {data.upcomingDeadlines.map((task) => (
-                <div key={task.id} className="p-4 flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-text">{task.title}</p>
-                    {task.assignees.length > 0 && (
-                      <p className="text-xs text-text-muted mt-1">
-                        Assigned: {task.assignees.map((a) => a.user.name).join(", ")}
-                      </p>
-                    )}
-                  </div>
-                  <span className="flex items-center gap-1 text-xs text-text-muted shrink-0">
-                    <FiClock size={12} />
-                    {new Date(task.deadline).toLocaleDateString()}
-                  </span>
+                <div key={task.id} className="p-4">
+                  <TaskCard
+                    title={task.title}
+                    deadline={task.deadline}
+                    status="PENDING"
+                    assigneeNames={task.assignees.map((a) => a.user.name)}
+                    variant="embedded"
+                    leadingAction={
+                      <button
+                        type="button"
+                        onClick={() => handleCompleteTask(task.id)}
+                        disabled={completingTaskId === task.id}
+                        aria-label={`Mark ${task.title} as complete`}
+                        className="text-text-muted hover:text-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <FiCheckCircle size={20} />
+                      </button>
+                    }
+                  />
                 </div>
               ))}
             </div>
