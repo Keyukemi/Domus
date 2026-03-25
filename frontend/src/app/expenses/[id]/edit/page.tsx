@@ -18,6 +18,8 @@ interface Member {
   email: string;
 }
 
+type ExpenseStatus = "PAID" | "PLANNED";
+
 export default function EditExpensePage() {
   return (
     <ProtectedRoute>
@@ -37,6 +39,7 @@ function EditExpense() {
   const [category, setCategory] = useState<string>(EXPENSE_CATEGORIES[0]);
   const [customCategory, setCustomCategory] = useState("");
   const [date, setDate] = useState("");
+  const [status, setStatus] = useState<ExpenseStatus>("PAID");
   const [splitAmongIds, setSplitAmongIds] = useState<string[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,6 +76,7 @@ function EditExpense() {
           setCustomCategory(expenseData.category);
         }
         setDate(expenseData.date.split("T")[0]);
+        setStatus(expenseData.status);
         setSplitAmongIds(expenseData.splits.map((s: { user: Member }) => s.user.id));
       } else {
         setError(expenseData.message || "Failed to load expense.");
@@ -105,6 +109,7 @@ function EditExpense() {
           amount: parseFloat(amount),
           category: resolvedCategory,
           date,
+          status,
           splitAmongIds,
         }),
       });
@@ -219,11 +224,34 @@ function EditExpense() {
               </div>
             )}
 
-            <div className="rounded-xl border border-border-light bg-bg-feature px-4 py-3">
-              <p className="text-sm font-medium text-text">Payment note</p>
-              <p className="text-xs text-text-muted mt-1">
-                This expense is recorded as paid by you. The checked household members will share the amount equally.
-              </p>
+            <div className="rounded-xl border border-border-light bg-bg-feature px-4 py-3 space-y-3">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={status === "PAID"}
+                  onChange={(e) =>
+                    setStatus(e.target.checked ? "PAID" : "PLANNED")
+                  }
+                  className="mt-0.5 accent-primary"
+                />
+                <div>
+                  <p className="text-sm font-medium text-text">
+                    I&apos;ve already paid this expense
+                  </p>
+                  <p className="text-xs text-text-muted mt-1">
+                    Uncheck this to keep it as a planned expense until payment is made.
+                  </p>
+                </div>
+              </label>
+
+              <div>
+                <p className="text-sm font-medium text-text">Payment note</p>
+                <p className="text-xs text-text-muted mt-1">
+                  {status === "PAID"
+                    ? "This expense is marked as paid, so it contributes to household balances."
+                    : "This expense is marked as planned, so it stays visible without changing balances yet."}
+                </p>
+              </div>
             </div>
 
             <div>
@@ -273,9 +301,11 @@ function EditExpense() {
 
                 {splitAmongIds.length > 0 && (
                   <p className="text-xs text-text-muted mt-1">
-                    {splitAmongIds.includes(user?.id || "")
-                      ? "Your share is included in this split."
-                      : "Your share is not included in this split."}
+                    {status === "PAID"
+                      ? splitAmongIds.includes(user?.id || "")
+                        ? "Your share is included in this split."
+                        : "Your share is not included in this split."
+                      : "These are the household members who will share this expense once it is paid."}
                   </p>
                 )}
               </div>

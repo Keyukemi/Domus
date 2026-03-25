@@ -167,6 +167,7 @@ function TasksList() {
                   deadline={task.deadline}
                   status={task.status}
                   assigneeNames={task.assignees.map(({ user: assignee }) => assignee.name)}
+                  actionsPlacement="bottom-right-mobile"
                   leadingAction={
                     <button
                       onClick={() => handleToggleStatus(task)}

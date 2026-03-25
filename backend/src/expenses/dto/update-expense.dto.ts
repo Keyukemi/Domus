@@ -8,7 +8,9 @@ import {
   MinLength,
   MaxLength,
   Min,
+  IsEnum,
 } from 'class-validator';
+import { ExpenseStatus } from '../../generated/prisma/enums';
 
 export class UpdateExpenseDto {
   @IsOptional()
@@ -31,6 +33,10 @@ export class UpdateExpenseDto {
   @IsOptional()
   @IsDateString()
   date?: string;
+
+  @IsOptional()
+  @IsEnum(ExpenseStatus)
+  status?: ExpenseStatus;
 
   @IsOptional()
   @IsArray()

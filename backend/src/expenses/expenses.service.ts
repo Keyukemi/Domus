@@ -7,6 +7,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { CreateSettlementDto } from './dto/create-settlement.dto';
+import { ExpenseStatus } from '../generated/prisma/enums';
 
 @Injectable()
 export class ExpensesService {
@@ -65,6 +66,7 @@ export class ExpensesService {
         amount: dto.amount,
         category: dto.category,
         date: new Date(dto.date),
+        status: dto.status ?? ExpenseStatus.PAID,
         paidById: userId,
         householdId: user.householdId!,
         splits: {
@@ -168,6 +170,7 @@ export class ExpensesService {
         ...(dto.amount !== undefined && { amount: dto.amount }),
         ...(dto.category !== undefined && { category: dto.category }),
         ...(dto.date !== undefined && { date: new Date(dto.date) }),
+        ...(dto.status !== undefined && { status: dto.status }),
       },
       include: this.expenseInclude,
     });
@@ -230,7 +233,10 @@ export class ExpensesService {
 
     const [expenses, settlements] = await Promise.all([
       this.prisma.expense.findMany({
-        where: { householdId: user.householdId! },
+        where: {
+          householdId: user.householdId!,
+          status: ExpenseStatus.PAID,
+        },
         include: {
           paidBy: { select: { id: true, name: true, email: true } },
           splits: {

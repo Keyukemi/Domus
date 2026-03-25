@@ -12,6 +12,7 @@ interface TaskCardProps {
   leadingAction?: React.ReactNode;
   actions?: React.ReactNode;
   variant?: "default" | "embedded";
+  actionsPlacement?: "side" | "bottom-right-mobile";
 }
 
 function isOverdue(status: TaskCardProps["status"], deadline?: string | null) {
@@ -31,6 +32,7 @@ export default function TaskCard({
   leadingAction,
   actions,
   variant = "default",
+  actionsPlacement = "side",
 }: TaskCardProps) {
   const overdue = isOverdue(status, deadline);
   const statusTone =
@@ -41,6 +43,10 @@ export default function TaskCard({
       : overdue
         ? "rounded-2xl border border-red-200 bg-bg-card p-5"
         : "rounded-2xl border border-border-light bg-bg-card p-5";
+  const actionsWrapperClasses =
+    actionsPlacement === "bottom-right-mobile"
+      ? "flex w-full justify-end sm:w-auto sm:justify-start sm:items-start sm:shrink-0"
+      : "flex shrink-0 items-start";
 
   return (
     <div className={wrapperClasses}>
@@ -91,7 +97,7 @@ export default function TaskCard({
           </div>
         </div>
 
-        {actions && <div className="flex shrink-0 items-start">{actions}</div>}
+        {actions && <div className={actionsWrapperClasses}>{actions}</div>}
       </div>
     </div>
   );
